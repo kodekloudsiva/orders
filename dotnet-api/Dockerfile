@@ -4,7 +4,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-RUN ls -lrta
+RUN echo 'Hi Siva' && ls -lrt
 
 # Copy csproj files and restore dependencies
 COPY ./orders/orders.application/orders.application.csproj orders.application/
