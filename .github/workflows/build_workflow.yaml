@@ -23,6 +23,10 @@ jobs:
       
       - name: Generate timestamp
         run: echo "TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
+      - name: tmp get path and list directory
+        run: |
+             pwd && ls -lrt
           
       - name: Build and push ms sql image to GitHub Container Registry
         uses: docker/build-push-action@v6
