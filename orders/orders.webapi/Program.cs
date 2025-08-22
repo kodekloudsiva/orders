@@ -57,8 +57,10 @@ namespace orders.webapi
                 });
             });
 
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
             builder.Services.AddDbContext<OrderDbContext>(options =>
-                options.UseSqlServer(@"Data Source=;Initial Catalog=;Integrated Security=True;TrustServerCertificate=True",
+                options.UseSqlServer(connectionString,
                 sqlOptions => sqlOptions.MigrationsAssembly("orders.database"))
             );
 
