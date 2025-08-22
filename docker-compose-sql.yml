@@ -2,23 +2,30 @@ version: '3.8'
 
 services:
   sqlserver:
-    image: siva_custom_ms_sql:${IMAGE_TAG}
-    build:
-      context: ./dockerfile_ms_sql
-    container_name: sqlserver
+    image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=${SA_PASSWORD}
+      SA_PASSWORD: ${SA_PASSWORD}
+      ACCEPT_EULA: "Y"
     ports:
       - "1433:1433"
+    volumes:
+      - sqlserverdata:/var/opt/mssql
     networks:
-      - ms_sql_dotnet_api
-    healthcheck:
-      test: ["CMD", "sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${SA_PASSWORD}", "-Q", "SELECT 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      - app-network
+
+  dotnet-api:
+    image: ghcr.io/kodekloudsiva/siva-dotnet-api:v20250822074521
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=OrdersDb;User Id=sa;Password=${SA_PASSWORD};
+    ports:
+      - "5000:80"
+    depends_on:
+      - sqlserver
+    networks:
+      - app-network
+
+volumes:
+  sqlserverdata:
 
 networks:
-  ms_sql_dotnet_api:
-    driver: bridge
+  app-network:
