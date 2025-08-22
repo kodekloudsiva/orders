@@ -1,0 +1,4 @@
+**/*.csproj
+.git
+.github
+*.md
