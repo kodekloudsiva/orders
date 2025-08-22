@@ -26,7 +26,7 @@ jobs:
 
       - name: tmp get path and list directory
         run: |
-             pwd && ls -lrt
+             pwd && ls -lrta
           
       - name: Build and push ms sql image to GitHub Container Registry
         uses: docker/build-push-action@v6
