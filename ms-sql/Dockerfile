@@ -8,7 +8,11 @@ ENV ACCEPT_EULA=Y
 ENV MSSQL_PID=Developer
 
 # Install dependencies and mssql-tools
-RUN apt-get update 
+
+RUN cat /etc/apt/sources.list
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update || (cat /etc/apt/sources.list && exit 1)
 
 RUN apt-get install -y curl gnupg2 apt-transport-https software-properties-common unixodbc-dev
 
