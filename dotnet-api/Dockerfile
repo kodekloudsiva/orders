@@ -5,17 +5,17 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copy only .csproj files first
-COPY orders/orders.application/orders.application.csproj orders.application/
-COPY orders/orders.domain/orders.domain.csproj orders.domain/
-COPY orders/orders.infrastructure/orders.infrastructure.csproj orders.infrastructure/
-COPY orders/orders.shared/orders.shared.csproj orders.shared/
-COPY orders/orders.database/orders.database.csproj orders.database/
-COPY orders/orders.webapi/orders.webapi.csproj orders.webapi/
+COPY orders/orders.application/ orders.application/
+COPY orders/orders.domain/ orders.domain/
+COPY orders/orders.infrastructure/ orders.infrastructure/
+COPY orders/orders.shared/ orders.shared/
+COPY orders/orders.database/ orders.database/
+COPY orders/orders.webapi/ orders.webapi/
 
 RUN dotnet restore orders.webapi/orders.webapi.csproj
 
 # Copy the rest of the source code
-COPY . .
+# COPY . .
 
 # Optional debug to verify files copied (can remove later)
 RUN echo "Files in orders.application:" && find orders.application -type f
