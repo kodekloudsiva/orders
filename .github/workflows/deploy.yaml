@@ -1,0 +1,39 @@
+name: Deploy to Ubuntu Server
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: [ self-hosted, siva-self-hosted ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Add SSH host to known_hosts
+        run: |
+          ssh-keyscan -H ${{ vars.PROD_HOST }} >> ~/.ssh/known_hosts
+
+      - name: SSH and deploy
+        run: |
+          ssh ubuntu@${{ vars.PROD_HOST }} << 'EOF'
+            cd ~/app
+
+            echo "🔐 Logging into GHCR..."
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+            echo "📦 Pulling latest image..."
+            docker-compose pull
+
+            echo "🚀 Recreating containers..."
+            docker-compose up -d
+
+            echo "✅ Deployment complete."
+          EOF
