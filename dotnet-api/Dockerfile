@@ -7,12 +7,12 @@ WORKDIR /src
 RUN echo 'Hi Siva' && ls -lrt
 
 # Copy only .csproj files first
-COPY orders/orders.application/orders.application.csproj orders.orders.application/
-COPY orders/orders.domain/orders.domain.csproj orders.orders.domain/
-COPY orders/orders.infrastructure/orders.infrastructure.csproj orders.orders.infrastructure/
-COPY orders/orders.shared/orders.shared.csproj orders.orders.shared/
-COPY orders/orders.database/orders.database.csproj orders.orders.database/
-COPY orders/orders.webapi/orders.webapi.csproj orders.orders.webapi/
+COPY orders/orders.application/orders.application.csproj orders.application/
+COPY orders/orders.domain/orders.domain.csproj orders.domain/
+COPY orders/orders.infrastructure/orders.infrastructure.csproj orders.infrastructure/
+COPY orders/orders.shared/orders.shared.csproj orders.shared/
+COPY orders/orders.database/orders.database.csproj orders.database/
+COPY orders/orders.webapi/orders.webapi.csproj orders.webapi/
 
 RUN dotnet restore orders.webapi/orders.webapi.csproj
 
