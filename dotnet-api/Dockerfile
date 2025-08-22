@@ -4,8 +4,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-RUN echo 'Hi Siva' && ls -lrt
-
 # Copy only .csproj files first
 COPY orders/orders.application/orders.application.csproj orders.application/
 COPY orders/orders.domain/orders.domain.csproj orders.domain/
@@ -18,6 +16,10 @@ RUN dotnet restore orders.webapi/orders.webapi.csproj
 
 # Copy the rest of the source code
 COPY . .
+
+RUN echo 'Lisint file: Hi Siva' && ls -lrt
+
+RUN echo 'Lisint file: Hi Siva' && ls -lrt orders.webapi
 
 # Publish the application
 RUN dotnet publish orders.webapi/orders.webapi.csproj -c Release -o /app/publish /p:UseAppHost=false
