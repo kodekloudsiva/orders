@@ -1,6 +1,3 @@
-# Ignore all project files — we copy these separately for caching
-**/*.csproj
-
 # Ignore git repository files
 .git
 .gitignore
