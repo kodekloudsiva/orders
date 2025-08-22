@@ -1,4 +1,16 @@
+# Ignore all project files — we copy these separately for caching
 **/*.csproj
+
+# Ignore git repository files
 .git
+.gitignore
+
+# Ignore GitHub Actions workflow files
 .github
+
+# Ignore markdown files like README.md
 *.md
+
+# Ignore build output folders (optional, if you don’t want to copy local builds)
+bin
+obj
