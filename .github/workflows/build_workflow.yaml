@@ -37,7 +37,7 @@ jobs:
       - name: Build and push dotnet api image to GitHub Container Registry
         uses: docker/build-push-action@v6
         with:
-          context: ./dotnet-api
+          context: .
           file: ./dotnet-api/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-dotnet-api:v${{ env.TIMESTAMP }}
