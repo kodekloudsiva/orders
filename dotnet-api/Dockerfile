@@ -11,6 +11,7 @@ COPY orders/orders.application/orders.application.csproj orders.application/
 COPY orders/orders.domain/orders.domain.csproj orders.domain/
 COPY orders/orders.infrastructure/orders.infrastructure.csproj orders.infrastructure/
 COPY orders/orders.shared/orders.shared.csproj orders.shared/
+COPY orders/orders.database/orders.database.csproj orders.database/
 COPY orders/orders.webapi/orders.webapi.csproj orders.webapi/
 
 RUN dotnet restore orders.webapi/orders.webapi.csproj
