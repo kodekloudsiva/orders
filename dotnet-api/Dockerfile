@@ -17,9 +17,9 @@ RUN dotnet restore orders.webapi/orders.webapi.csproj
 # Copy the rest of the source code
 COPY . .
 
-RUN echo 'Lisint file: Hi Siva' && ls -lrt
-
-RUN echo 'Lisint file: Hi Siva' && ls -lrt orders.webapi
+# Optional debug to verify files copied (can remove later)
+RUN echo "Files in orders.application:" && find orders.application -type f
+RUN echo "Files in orders.webapi:" && find orders.webapi -type f
 
 # Publish the application
 RUN dotnet publish orders.webapi/orders.webapi.csproj -c Release -o /app/publish /p:UseAppHost=false
