@@ -8,8 +8,9 @@ ENV ACCEPT_EULA=Y
 ENV MSSQL_PID=Developer
 
 # Install dependencies and mssql-tools
-RUN apt-get update && \
-    apt-get install -y curl gnupg2 apt-transport-https software-properties-common unixodbc-dev
+RUN apt-get update 
+
+RUN apt-get install -y curl gnupg2 apt-transport-https software-properties-common unixodbc-dev
 
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg 
 
