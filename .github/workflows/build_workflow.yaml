@@ -1,4 +1,4 @@
-name: MS SQL
+name: Build MS SQL & DOTNET API Workflow
 
 on:
   workflow_dispatch:
@@ -23,18 +23,22 @@ jobs:
       
       - name: Generate timestamp
         run: echo "TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
+      - name: tmp get path and list directory
+        run: |
+             pwd && ls -lrt
           
       - name: Build and push ms sql image to GitHub Container Registry
         uses: docker/build-push-action@v6
         with:
-          context: ./dockerfile_ms_sql
+          context: /dockerfile_ms_sql
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-ms-sql:v${{ env.TIMESTAMP }}
       
       - name: Build and push dotnet api image to GitHub Container Registry
         uses: docker/build-push-action@v6
         with:
-          context: ./dockerfile_dotnet_api
+          context: /dockerfile_dotnet_api
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-dotnet-api:v${{ env.TIMESTAMP }}
           
