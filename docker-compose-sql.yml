@@ -14,7 +14,7 @@ services:
       - app-network
 
   dotnet-api:
-    image: ghcr.io/kodekloudsiva/siva-dotnet-api:v20250822074521
+    image: ghcr.io/kodekloudsiva/siva-dotnet-api:v20250822173126
     environment:
       - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=OrdersDb;User Id=sa;Password=${SA_PASSWORD};
     ports:
