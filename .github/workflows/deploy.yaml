@@ -19,8 +19,8 @@ jobs:
 
       - name: Add SSH host to known_hosts
         run: |
-          echo ${{ vars.PROD_HOST }}
-          ssh-keyscan -H ${{ vars.PROD_HOST }} >> ~/.ssh/known_hosts
+          echo ${{ env.PROD_HOST }}
+          ssh-keyscan -H ${{ env.PROD_HOST }} >> ~/.ssh/known_hosts
 
       - name: SSH and deploy
         run: |
