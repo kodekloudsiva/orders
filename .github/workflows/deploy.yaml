@@ -19,12 +19,12 @@ jobs:
 
       - name: Add SSH host to known_hosts
         run: |
-          echo ${{ env.PROD_HOST }}
-          ssh-keyscan -H ${{ env.PROD_HOST }} >> ~/.ssh/known_hosts
+          echo ${{ vars.TARGET_DEPLOY_SERVER }}
+          ssh-keyscan -H ${{ vars.TARGET_DEPLOY_SERVER }} >> ~/.ssh/known_hosts
 
       - name: SSH and deploy
         run: |
-          ssh ubuntu@${{ vars.PROD_HOST }} << 'EOF'
+          ssh ubuntu@${{ vars.TARGET_DEPLOY_SERVER }} << 'EOF'
             cd ~/app
 
             echo "🔐 Logging into GHCR..."
