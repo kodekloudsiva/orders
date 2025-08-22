@@ -4,12 +4,14 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
+RUN ls -lrta
+
 # Copy csproj files and restore dependencies
-COPY orders.application/orders.application.csproj orders.application/
-COPY orders.domain/orders.domain.csproj orders.domain/
-COPY orders.infrastructure/orders.infrastructure.csproj orders.infrastructure/
-COPY orders.shared/orders.shared.csproj orders.shared/
-COPY orders.webapi/orders.webapi.csproj orders.webapi/
+COPY ./orders/orders.application/orders.application.csproj orders.application/
+COPY ./orders/orders.domain/orders.domain.csproj orders.domain/
+COPY ./orders/orders.infrastructure/orders.infrastructure.csproj orders.infrastructure/
+COPY ./orders/orders.shared/orders.shared.csproj orders.shared/
+COPY ./orders/orders.webapi/orders.webapi.csproj orders.webapi/
 
 RUN dotnet restore orders.webapi/orders.webapi.csproj
 
@@ -27,7 +29,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# Set the URL binding (optional — ensures app binds to port 8080)
+# Set the URL binding (optional â€” ensures app binds to port 8080)
 ENV ASPNETCORE_URLS=http://+:9090
 
 # Expose the default HTTP port
