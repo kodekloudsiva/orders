@@ -27,14 +27,14 @@ jobs:
       - name: Build and push ms sql image to GitHub Container Registry
         uses: docker/build-push-action@v6
         with:
-          context: ./dockerfile_ms_sql
+          context: /dockerfile_ms_sql
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-ms-sql:v${{ env.TIMESTAMP }}
       
       - name: Build and push dotnet api image to GitHub Container Registry
         uses: docker/build-push-action@v6
         with:
-          context: ./dockerfile_dotnet_api
+          context: /dockerfile_dotnet_api
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-dotnet-api:v${{ env.TIMESTAMP }}
           
