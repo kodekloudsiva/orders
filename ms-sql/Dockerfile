@@ -2,7 +2,8 @@
 FROM mcr.microsoft.com/mssql/server:2022-latest
 
 # Accept environment variables from outside
-ENV SA_PASSWORD=${SA_PASSWORD} #SA_PASSWORD Environment variable (set at runtime for security)
+# SA_PASSWORD Environment variable (set at runtime for security)
+ENV SA_PASSWORD=${SA_PASSWORD}
 ENV ACCEPT_EULA=Y
 ENV MSSQL_PID=Developer
 
