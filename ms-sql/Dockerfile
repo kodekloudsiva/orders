@@ -9,22 +9,16 @@ ENV MSSQL_PID=Developer
 
 # Install dependencies and mssql-tools
 
-RUN cat /etc/apt/sources.list
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update || (cat /etc/apt/sources.list && exit 1)
-
-RUN apt-get install -y curl gnupg2 apt-transport-https software-properties-common unixodbc-dev
-
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg 
-
-RUN curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
-    
-RUN apt-get update && \
+RUN sed -i 's/^# deb/deb/' /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y curl gnupg2 apt-transport-https software-properties-common unixodbc-dev && \
+    curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
+    curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
+    apt-get update && \
     ACCEPT_EULA=Y apt-get install -y mssql-tools unixodbc-dev && \
     ln -sfn /opt/mssql-tools/bin/sqlcmd /usr/bin/sqlcmd && \
     ln -sfn /opt/mssql-tools/bin/bcp /usr/bin/bcp && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    apt-get clean && rm -rf /var/lib/apt/lists/* || true
 
 EXPOSE 1433
 
