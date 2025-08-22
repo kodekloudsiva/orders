@@ -1,4 +1,4 @@
-name: MS SQL
+name: Build MS SQL & DOTNET API Workflow
 
 on:
   workflow_dispatch:
