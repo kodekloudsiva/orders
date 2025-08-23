@@ -19,7 +19,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ls -lrta
           echo "Siva - PVT_KEY - ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}"
-          echo "Siva - TARGET_SERVER - ${{ vars.TARGET_DEPLOY_SERVER }}
+          echo "Siva - TARGET_SERVER - ${{ vars.TARGET_DEPLOY_SERVER }}"
 
       - name: Add SSH host to known_hosts
         run: |
