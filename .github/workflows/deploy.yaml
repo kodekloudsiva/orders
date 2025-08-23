@@ -25,7 +25,7 @@ jobs:
 
       - name: SSH and deploy
         run: |
-          ssh -i ~/.ssh/id_rsa root@${{ vars.TARGET_DEPLOY_SERVER }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ vars.TARGET_DEPLOY_SERVER }} << 'EOF'
             cd ~/app
 
             echo "🔐 Logging into GHCR..."
