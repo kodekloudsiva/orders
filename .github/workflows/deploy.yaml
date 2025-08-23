@@ -36,13 +36,11 @@ jobs:
       - name: SSH and deploy
         run: |
 
-          remote_host=ubuntu@${{ vars.TARGET_DEPLOY_SERVER }}
+          remote_host="ubuntu@${{ vars.TARGET_DEPLOY_SERVER }}"
           dest_dir="~/app"
           local_file="./docker-compose-sql.yml"      
           
           
-          # scp -i ~/.ssh/id_rsa $local_file $remote_host:$dest_dir/
-          # ssh -i ~/.ssh/id_rsa $remote_host "mkdir -p $dest_dir"
 
           ssh -i ~/.ssh/id_rsa $remote_host
                   
