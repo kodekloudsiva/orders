@@ -42,7 +42,7 @@ jobs:
           
           
 
-          ssh -i ~/.ssh/id_rsa $remote_host
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ vars.TARGET_DEPLOY_SERVER }}
                   
             echo "🔐 Logging into GHCR..."
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
