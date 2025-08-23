@@ -40,17 +40,21 @@ jobs:
           dest_dir="~/app"
           local_file="./docker-compose-sql.yml"      
           
-          
-
-          ssh -i ~/.ssh/id_rsa ubuntu@${{ vars.TARGET_DEPLOY_SERVER }}
-                  
+                        
+    
+          ssh -i ~/.ssh/id_rsa $remote_host << EOF
             echo "🔐 Logging into GHCR..."
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-
-            echo "Pinging current working directory"
+      
+            echo "📂 Current working directory:"
             pwd
+      
+            echo "🖥️ Hostname:"
             hostname
+      
+            echo "👤 User:"
             whoami
+          EOF
 
             echo "📦 Pulling latest image..."
             docker compose pull
