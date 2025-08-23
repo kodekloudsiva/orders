@@ -54,7 +54,6 @@ jobs:
       
             echo "👤 User:"
             whoami
-          EOF
 
             echo "📦 Pulling latest image..."
             docker compose pull
@@ -63,4 +62,4 @@ jobs:
             docker compose up -d
 
             echo "✅ Deployment complete."
-          EOF
+          EOF      
