@@ -20,6 +20,8 @@ jobs:
           ls -lrta
           echo "Siva - PVT_KEY - ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}"
           echo "Siva - TARGET_SERVER - ${{ vars.TARGET_DEPLOY_SERVER }}"
+          echo "Siva - HOST_Name - ${{ hostname }}"
+          echo "Siva - WHOAMI - ${{ whoami }}"
 
       - name: Add SSH host to known_hosts
         run: |
