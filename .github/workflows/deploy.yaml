@@ -46,6 +46,9 @@ jobs:
             echo "🔐 Logging into GHCR..."
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
+            echo "Pinging current working directory"
+            pwd
+
             echo "📦 Pulling latest image..."
             docker compose pull
 
