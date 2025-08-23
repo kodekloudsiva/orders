@@ -28,11 +28,21 @@ jobs:
           echo ${{ vars.TARGET_DEPLOY_SERVER }}
           ssh-keyscan -H ${{ vars.TARGET_DEPLOY_SERVER }} >> ~/.ssh/known_hosts
 
+      - name: COPY Docker compose to target machine
+        run: |
+          
+
+
       - name: SSH and deploy
         run: |
-          ssh -i ~/.ssh/id_rsa ubuntu@${{ vars.TARGET_DEPLOY_SERVER }} << 'EOF'
-            mkdir -p ~/app && cd ~/app
 
+          remote_host=ubuntu@${{ vars.TARGET_DEPLOY_SERVER }}
+          dest_dir="~/app"
+          local_file="./docker-compose-sql.yml"      
+          
+          ssh -i ~/.ssh/id_rsa $remote_host "mkdir -p $dest_dir" && \
+          scp -i ~/.ssh/id_rsa $local_file $remote_host:$dest_dir/
+                  
             echo "🔐 Logging into GHCR..."
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
