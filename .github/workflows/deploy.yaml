@@ -41,8 +41,10 @@ jobs:
           local_file="./docker-compose-sql.yml"      
           
           
-          scp -i ~/.ssh/id_rsa $local_file $remote_host:$dest_dir/
-          ssh -i ~/.ssh/id_rsa $remote_host "mkdir -p $dest_dir"
+          # scp -i ~/.ssh/id_rsa $local_file $remote_host:$dest_dir/
+          # ssh -i ~/.ssh/id_rsa $remote_host "mkdir -p $dest_dir"
+
+          ssh -i ~/.ssh/id_rsa $remote_host
                   
             echo "🔐 Logging into GHCR..."
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
