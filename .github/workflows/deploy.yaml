@@ -48,6 +48,8 @@ jobs:
 
             echo "Pinging current working directory"
             pwd
+            hostname
+            whoami
 
             echo "📦 Pulling latest image..."
             docker compose pull
