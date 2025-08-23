@@ -31,7 +31,7 @@ jobs:
       - name: SSH and deploy
         run: |
           ssh -i ~/.ssh/id_rsa ubuntu@${{ vars.TARGET_DEPLOY_SERVER }} << 'EOF'
-            cd ~/app
+            mkdir -p ~/app && cd ~/app
 
             echo "🔐 Logging into GHCR..."
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
