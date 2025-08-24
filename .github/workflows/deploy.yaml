@@ -61,6 +61,7 @@ jobs:
             sudo docker compose -f $COMPOSE_FILE_NAME pull
 
             echo "🧱 Starting containers..."
+            echo "Siva's SA password is: " + $SA_PASSWORD
             export SA_PASSWORD=$SA_PASSWORD
             sudo docker compose -f $COMPOSE_FILE_NAME up -d
 
