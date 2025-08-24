@@ -14,7 +14,7 @@ jobs:
       SSH_KEY_PATH: /home/runner/.ssh/id_rsa
       REMOTE_APP_DIR: /home/ubuntu/app
       COMPOSE_FILE_NAME: docker-compose-sql.yml
-      SA_PASSWORD: ${{ secrets.DB_SA_PASSWORD }}
+      SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
 
     steps:
       - name: ✅ Checkout code
