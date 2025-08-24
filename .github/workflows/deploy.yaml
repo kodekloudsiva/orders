@@ -45,7 +45,8 @@ jobs:
           ssh -i ~/.ssh/id_rsa $remote_host << EOF
             echo "🔐 Logging into GHCR..."
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-            cd 
+            mkdir -p ~/app
+            cd /home/ubuntu/app
             echo "📂 Current working directory:"
             pwd
       
