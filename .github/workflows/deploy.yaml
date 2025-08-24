@@ -7,101 +7,55 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      REMOTE_USER: ubuntu
+      REMOTE_HOST: ${{ vars.TARGET_DEPLOY_SERVER }}
+      SSH_KEY_PATH: ~/.ssh/id_rsa
+      REMOTE_APP_DIR: /home/ubuntu/app
+      COMPOSE_FILE_NAME: docker-compose-sql.yml
+
     steps:
-      - name: Checkout code
+      - name: ✅ Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up SSH key
-        run: |        
-        
+      - name: 🔐 Set up SSH key
+        run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 700 ~/.ssh
-          chmod 600 ~/.ssh/id_rsa
-          ls -lrta
-          echo "Siva - PVT_KEY - ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}"
-          echo "Siva - TARGET_SERVER - ${{ vars.TARGET_DEPLOY_SERVER }}"
-          hostname
-          whoami
+          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > $SSH_KEY_PATH
+          chmod 600 $SSH_KEY_PATH
 
-      - name: Add SSH host to known_hosts
+      - name: 📡 Add remote host to known_hosts
         run: |
-          echo ${{ vars.TARGET_DEPLOY_SERVER }}
-          ssh-keyscan -H ${{ vars.TARGET_DEPLOY_SERVER }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
 
-      - name: COPY Docker compose to target machine
+      - name: 📤 Copy files to remote server
         run: |
-          
+          # Create remote app directory
+          ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST "mkdir -p $REMOTE_APP_DIR"
 
+          # Copy docker-compose file and install script
+          scp -i $SSH_KEY_PATH $COMPOSE_FILE_NAME $REMOTE_USER@$REMOTE_HOST:$REMOTE_APP_DIR/
+          scp -i $SSH_KEY_PATH scripts/install-docker.sh $REMOTE_USER@$REMOTE_HOST:$REMOTE_APP_DIR/
 
-      - name: SSH and deploy
+      - name: 🐳 Install Docker if needed
         run: |
+          ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST "bash $REMOTE_APP_DIR/install-docker.sh"
 
-          remote_host="ubuntu@${{ vars.TARGET_DEPLOY_SERVER }}"
-          dest_dir="~/app"
-          local_file="./docker-compose-sql.yml"      
-          
-                        
-    
-          ssh -i ~/.ssh/id_rsa $remote_host << EOF
-
-            # Exit on error
-            set -e  
-          
-            # 1. Update package index
-            sudo apt-get update -y
-            
-            # 2. Install required packages
-            sudo apt-get install -y \
-                ca-certificates \
-                curl \
-                gnupg \
-                lsb-release
-            
-            # 3. Add Docker's official GPG key
-            sudo install -m 0755 -d /etc/apt/keyrings
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-                | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-            
-            sudo chmod a+r /etc/apt/keyrings/docker.gpg
-            
-            # 4. Add Docker repository
-            echo \
-              "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-              https://download.docker.com/linux/ubuntu \
-              $(lsb_release -cs) stable" \
-              | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-            
-            # 5. Update package index again
-            sudo apt-get update -y
-            
-            # 6. Install Docker Engine and CLI
-            sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-            
-            # 7. Optional: Add current user to docker group (no sudo needed for docker commands)
-            # You need to log out and back in for this to take effect
-            sudo usermod -aG docker $USER
-            
-            echo "Docker installation completed successfully."
+      - name: 🚀 Deploy application
+        run: |
+          ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST << EOF
+            set -e
 
             echo "🔐 Logging into GHCR..."
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-            mkdir -p ~/app
-            cd /home/ubuntu/app
-            echo "📂 Current working directory:"
-            pwd
-      
-            echo "🖥️ Hostname:"
-            hostname
-      
-            echo "👤 User:"
-            whoami
 
-            echo "📦 Pulling latest image..."
-            docker compose pull
+            cd $REMOTE_APP_DIR
 
-            echo "🚀 Recreating containers..."
-            docker compose up -d
+            echo "📥 Pulling latest image..."
+            docker compose -f $COMPOSE_FILE_NAME pull
+
+            echo "🧱 Starting containers..."
+            docker compose -f $COMPOSE_FILE_NAME up -d
 
             echo "✅ Deployment complete."
-          EOF      
+          EOF
