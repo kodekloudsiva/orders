@@ -10,8 +10,8 @@ jobs:
     env:
       REMOTE_USER: ubuntu
       REMOTE_HOST: ${{ vars.TARGET_DEPLOY_SERVER }}
-      SSH_DIRECTORY: ~/.ssh
-      SSH_KEY_PATH: ~/.ssh/id_rsa
+      SSH_DIRECTORY: /home/runner/.ssh
+      SSH_KEY_PATH: /home/runner/.ssh/id_rsa
       REMOTE_APP_DIR: /home/ubuntu/app
       COMPOSE_FILE_NAME: docker-compose-sql.yml
 
@@ -30,7 +30,7 @@ jobs:
 
       - name: 📡 Add remote host to known_hosts
         run: |
-          ssh-keyscan -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$REMOTE_HOST" >> $SSH_DIRECTORY/known_hosts
 
       - name: 📤 Copy files to remote server
         run: |
