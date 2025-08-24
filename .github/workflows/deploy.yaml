@@ -10,6 +10,7 @@ jobs:
     env:
       REMOTE_USER: ubuntu
       REMOTE_HOST: ${{ vars.TARGET_DEPLOY_SERVER }}
+      SSH_DIRECTORY: ~/.ssh
       SSH_KEY_PATH: ~/.ssh/id_rsa
       REMOTE_APP_DIR: /home/ubuntu/app
       COMPOSE_FILE_NAME: docker-compose-sql.yml
@@ -18,9 +19,12 @@ jobs:
       - name: ✅ Checkout code
         uses: actions/checkout@v4
 
+      - name: 🛠️ Make install script executable
+        run: chmod +x scripts/install-docker.sh
+
       - name: 🔐 Set up SSH key
         run: |
-          mkdir -p ~/.ssh
+          mkdir -p $SSH_DIRECTORY
           echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > $SSH_KEY_PATH
           chmod 600 $SSH_KEY_PATH
 
