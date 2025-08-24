@@ -51,7 +51,7 @@ jobs:
             set -e
 
             echo "🔐 Logging into GHCR..."
-            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+            echo "${{ secrets.GHCR_PAT }}" | sudo docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
             cd $REMOTE_APP_DIR
 
