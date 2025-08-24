@@ -56,10 +56,10 @@ jobs:
             cd $REMOTE_APP_DIR
 
             echo "📥 Pulling latest image..."
-            docker compose -f $COMPOSE_FILE_NAME pull
+            sudo docker compose -f $COMPOSE_FILE_NAME pull
 
             echo "🧱 Starting containers..."
-            docker compose -f $COMPOSE_FILE_NAME up -d
+            sudo docker compose -f $COMPOSE_FILE_NAME up -d
 
             echo "✅ Deployment complete."
           EOF
