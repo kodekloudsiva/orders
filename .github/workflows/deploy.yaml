@@ -56,9 +56,11 @@ jobs:
             cd $REMOTE_APP_DIR
 
             echo "📥 Pulling latest image..."
+            export SA_PASSWORD="${{ secrets.SA_PASSWORD }}"
             sudo docker compose -f $COMPOSE_FILE_NAME pull
 
             echo "🧱 Starting containers..."
+            export SA_PASSWORD="${{ secrets.SA_PASSWORD }}"
             sudo docker compose -f $COMPOSE_FILE_NAME up -d
 
             echo "✅ Deployment complete."
