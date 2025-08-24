@@ -51,19 +51,16 @@ jobs:
           ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST << EOF
             set -e
 
-            # Create .env file dynamically
-            echo "SA_PASSWORD=$SA_PASSWORD" > $REMOTE_APP_DIR/.env
-
             echo "🔐 Logging into GHCR..."
             echo "${{ secrets.GHCR_PAT }}" | sudo docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
             cd $REMOTE_APP_DIR
 
             echo "📥 Pulling latest image..."            
-            sudo docker compose -f $COMPOSE_FILE_NAME pull
+            SA_PASSWORD="$SA_PASSWORD" sudo docker compose -f $COMPOSE_FILE_NAME pull
 
             echo "🧱 Starting containers..."
-            sudo docker compose -f $COMPOSE_FILE_NAME up -d
+            SA_PASSWORD="$SA_PASSWORD" sudo docker compose -f $COMPOSE_FILE_NAME up -d
 
             echo "✅ Deployment complete."
           EOF
