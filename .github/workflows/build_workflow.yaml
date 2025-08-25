@@ -6,7 +6,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: ${{ github.repository_owner }}
-  VARIABLE_GIHUB_API: 'https://api.github.com/repos/${{ github.repository_owner }}/${{ github.repository }}/actions/variables'
+  VARIABLE_GIHUB_API: 'https://api.github.com/repos/${{ github.repository }}/actions/variables'
 
 jobs:
   build-images:
