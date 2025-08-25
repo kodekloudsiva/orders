@@ -52,7 +52,7 @@ jobs:
 
       - name: 🚀 Deploy application
         run: |
-          ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST << 'EOF'
+          ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST << EOF
             set -e
 
             echo "🔐 Logging into GHCR..."
@@ -61,10 +61,8 @@ jobs:
             cd $REMOTE_APP_DIR
 
             echo "📝 Writing environment variables to .env file..."
-            cat <<EOT > .env
-            DOTNET_IMAGE_TAG=${{ vars.DOTNET_IMAGE_TAG }}
-            SA_PASSWORD=${{ secrets.SA_PASSWORD }}
-            EOT
+            echo "DOTNET_IMAGE_TAG=${{ vars.DOTNET_IMAGE_TAG }}" > .env
+            echo "SA_PASSWORD=${{ secrets.SA_PASSWORD }}" >> .env
 
             echo "📥 Pulling latest image..."   
             sudo docker compose --env-file .env -f $COMPOSE_FILE_NAME pull
