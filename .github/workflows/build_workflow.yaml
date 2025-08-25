@@ -31,6 +31,7 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             '${{ env.VARIABLE_GIHUB_API }}/DOTNET_IMAGE_TAG' \
             -d '{"name":"DOTNET_IMAGE_TAG","value":"${{ github.ref_name }}-v-${{ github.run_number }}"}'
+          echo "updated varss dotnetimagetag" + ${{ vars.DOTNET_IMAGE_TAG }}
 
           
       #- name: Build and push ms sql image to GitHub Container Registry
@@ -54,5 +55,5 @@ jobs:
           context: .
           file: ./dotnet-api/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-dotnet-api:${{ env.DOTNET_IMAGE_TAG }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-dotnet-api:${{ vars.DOTNET_IMAGE_TAG }}
           
