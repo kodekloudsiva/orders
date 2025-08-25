@@ -44,6 +44,7 @@ jobs:
       #      SA_PASSWORD=${{ secrets.SA_PASSWORD }}
       - name: test dotnet image tag step
         run: | 
+            echo "current image tag, ${{ github.ref_name }}-v-${{ github.run_number }}"
             echo "vars dotnetimagetag" + ${{ vars.DOTNET_IMAGE_TAG }}
             echo "env dotnetimagetag" + ${{ env.DOTNET_IMAGE_TAG }}
       
