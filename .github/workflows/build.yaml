@@ -96,7 +96,7 @@ jobs:
           fi
           COVERAGE_PERCENT=$(xmllint --xpath "string(//Summary/Linecoverage)" "$COVERAGE_FILE")          
           echo "✅ Code coverage: $COVERAGE_PERCENT%"
-          if [ "$COVERAGE_PERCENT" -lt 70 ]; then
+          if echo "$COVERAGE_PERCENT < 70" | bc -l | grep -q 1; then
             echo "❌ Code coverage ($COVERAGE_PERCENT%) is below the 70% threshold."
             exit 1
           fi
