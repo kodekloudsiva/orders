@@ -37,7 +37,7 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name verify file structure
+      - name: verify file structure
         run: | 
             pwd
             ls -lrta
