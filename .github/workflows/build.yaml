@@ -44,7 +44,7 @@ jobs:
 
       - name: Run unit tests with coverage
         run: |
-          dotnet test ./orders.test/orders.test.csproj \
+          dotnet test ./orders/orders.test/orders.test.csproj \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura \
