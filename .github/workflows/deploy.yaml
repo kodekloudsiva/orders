@@ -60,7 +60,8 @@ jobs:
 
             cd $REMOTE_APP_DIR
 
-            echo "📥 Pulling latest image..."            
+            echo "📥 Pulling latest image..."   
+            echo "pullingo..." + "$DOTNET_IMAGE_TAG"         
             SA_PASSWORD="$SA_PASSWORD" DOTNET_IMAGE_TAG="$DOTNET_IMAGE_TAG" sudo docker compose -f $COMPOSE_FILE_NAME pull
 
             echo "🧱 Starting containers..."
