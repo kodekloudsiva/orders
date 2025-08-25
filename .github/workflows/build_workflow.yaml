@@ -25,6 +25,7 @@ jobs:
         run: echo "DOTNET_IMAGE_TAG=${{ github.ref_name }}-v-${{ github.run_number }}" >> $GITHUB_ENV
 
       - name: Save tag for downstream workflows
+        run: echo "{{ env.DOTNET_IMAGE_TAG }}"
         run: echo "{{ env.DOTNET_IMAGE_TAG }}" > DOTNET_IMAGE_TAG.txt
 
       - name: Upload image tag artifact
@@ -32,6 +33,9 @@ jobs:
         with:
           name: DOTNET_IMAGE_TAG
           path: DOTNET_IMAGE_TAG.txt
+
+      - name: validate DOTNET_IMAGE_TAG
+        run: ls -lrt
           
       #- name: Build and push ms sql image to GitHub Container Registry
       #  uses: docker/build-push-action@v6
