@@ -77,7 +77,7 @@ jobs:
       - name: Verify files
         run: | 
             pwd
-            ls -lrta
+            ls -lrta orders/orders.test
 
       - name: Validate 70% code coverage threshold
         run: |
