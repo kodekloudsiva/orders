@@ -60,7 +60,7 @@ jobs:
           reportgenerator \
             -reports:./TestResults/**/coverage.cobertura.xml \
             -targetdir:CoverageReport \
-            "-reporttypes:Html;TextSummary;HtmlSummary;Cobertura"
+            "-reporttypes:Html;TextSummary;HtmlSummary;Cobertura;XmlSummary"
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
