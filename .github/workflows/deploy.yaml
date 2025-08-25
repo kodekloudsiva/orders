@@ -62,8 +62,8 @@ jobs:
 
             echo "📝 Writing environment variables to .env file..."
             cat <<EOT > .env
-      DOTNET_IMAGE_TAG=${{ vars.DOTNET_IMAGE_TAG }}
-      EOT
+            DOTNET_IMAGE_TAG=${{ vars.DOTNET_IMAGE_TAG }}
+            EOT
 
             echo "📥 Pulling latest image..."   
             echo "pullingo..." + "$DOTNET_IMAGE_TAG"         
