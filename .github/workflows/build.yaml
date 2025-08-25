@@ -6,37 +6,108 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: ${{ github.repository_owner }}
-  VARIABLE_GIHUB_API: 'https://api.github.com/repos/${{ github.repository }}/actions/variables'
+  VARIABLE_GITHUB_API: 'https://api.github.com/repos/${{ github.repository }}/actions/variables'
   NEW_DOTNET_IMAGE_TAG: ${{ github.ref_name }}-v-${{ github.run_number }}
 
-
 jobs:
-  build-images:
+  checkout:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.set_tag.outputs.image_tag }}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set image tag output
+        id: set_tag
+        run: echo "image_tag=${{ env.NEW_DOTNET_IMAGE_TAG }}" >> $GITHUB_OUTPUT
+
+  test-and-coverage:
+    needs: checkout
     runs-on: ubuntu-latest
     steps:
-      - name: Download source files
+      - name: Checkout source code
         uses: actions/checkout@v4
-      
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Run unit tests with coverage
+        run: |
+          dotnet test orders.test.csproj \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Include="[orders.domain]*,[orders.application]*"
+
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Generate coverage report
+        run: |
+          reportgenerator \
+            -reports:./TestResults/**/coverage.cobertura.xml \
+            -targetdir:CoverageReport \
+            -reporttypes:Html;Cobertura;Summary
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ./TestResults/
+
+      - name: Upload code coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report
+          path: CoverageReport/
+
+      - name: Validate 70% code coverage threshold
+        run: |
+          COVERAGE_FILE=$(find CoverageReport -name 'Summary.xml')
+          if [ ! -f "$COVERAGE_FILE" ]; then
+            echo "❌ Coverage report not found."
+            exit 1
+          fi
+          COVERAGE_RATE=$(xmllint --xpath "string(//coverage/@line-rate)" "$COVERAGE_FILE")
+          COVERAGE_PERCENT=$(echo "$COVERAGE_RATE * 100" | bc | cut -d'.' -f1)
+          echo "✅ Code coverage: $COVERAGE_PERCENT%"
+          if [ "$COVERAGE_PERCENT" -lt 70 ]; then
+            echo "❌ Code coverage ($COVERAGE_PERCENT%) is below the 70% threshold."
+            exit 1
+          fi
+
+  build-and-push:
+    needs: [checkout, test-and-coverage]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GHCR_PAT }}
-      
-      - name: Set environment variable for image tag
+
+      - name: Update GitHub environment variable for image tag
         run: |
           curl -X PATCH \
             -H "Authorization: Bearer ${{ secrets.GHCR_PAT }}" \
             -H "Accept: application/vnd.github+json" \
-            '${{ env.VARIABLE_GIHUB_API }}/DOTNET_IMAGE_TAG' \
-            -d '{"name":"DOTNET_IMAGE_TAG","value":"${{ env.NEW_DOTNET_IMAGE_TAG }}"}'          
-      
-      - name: Build and push dotnet api image to GitHub Container Registry
+            "${{ env.VARIABLE_GITHUB_API }}/DOTNET_IMAGE_TAG" \
+            -d '{"name":"DOTNET_IMAGE_TAG","value":"${{ env.NEW_DOTNET_IMAGE_TAG }}"}'
+
+      - name: Build and push dotnet-api Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./dotnet-api/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-dotnet-api:${{ env.NEW_DOTNET_IMAGE_TAG }}
-          
