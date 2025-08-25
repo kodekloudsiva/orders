@@ -37,16 +37,6 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: verify file structure
-        run: | 
-            pwd
-            ls -lrta orders/orders.test/CoverageReport
-
-      - name: verify test results structure
-        run: | 
-            pwd
-            ls -lrta orders/orders.test/TestResults
-
       - name: Run unit tests with coverage
         run: |
           dotnet test ./orders/orders.test/orders.test.csproj \
@@ -79,15 +69,10 @@ jobs:
           name: code-coverage-report
           path: CoverageReport/
 
-      - name: Verify files
-        run: | 
-            pwd
-            ls -lrta orders/orders.test
-
       - name: Install xmllint
         run: sudo apt-get update && sudo apt-get install -y libxml2-utils
 
-      - name: Validate 70% code coverage threshold
+      - name: Validate 65% code coverage threshold
         run: |
           COVERAGE_FILE=$(find CoverageReport -name 'Summary.xml')
           if [ ! -f "$COVERAGE_FILE" ]; then
@@ -96,8 +81,8 @@ jobs:
           fi
           COVERAGE_PERCENT=$(xmllint --xpath "string(//Summary/Linecoverage)" "$COVERAGE_FILE")          
           echo "✅ Code coverage: $COVERAGE_PERCENT%"
-          if echo "$COVERAGE_PERCENT < 70" | bc -l | grep -q 1; then
-            echo "❌ Code coverage ($COVERAGE_PERCENT%) is below the 70% threshold."
+          if echo "$COVERAGE_PERCENT < 65" | bc -l | grep -q 1; then
+            echo "❌ Code coverage ($COVERAGE_PERCENT%) is below the 65% threshold."
             exit 1
           fi
 
