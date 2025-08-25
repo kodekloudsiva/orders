@@ -74,6 +74,11 @@ jobs:
           name: code-coverage-report
           path: CoverageReport/
 
+      - name: Verify files
+        run: | 
+            pwd
+            ls -lrta
+
       - name: Validate 70% code coverage threshold
         run: |
           COVERAGE_FILE=$(find CoverageReport -name 'Summary.xml')
