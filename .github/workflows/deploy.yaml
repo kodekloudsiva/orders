@@ -61,9 +61,10 @@ jobs:
             cd $REMOTE_APP_DIR
 
             echo "📝 Writing environment variables to .env file..."
-            cat <<EOT > .env                  
-                  DOTNET_IMAGE_TAG=${{ vars.DOTNET_IMAGE_TAG }}
-                EOT
+      cat <<EOT > .env
+SA_PASSWORD=${{ secrets.SA_PASSWORD }}
+DOTNET_IMAGE_TAG=${{ vars.DOTNET_IMAGE_TAG }}
+EOT
 
             echo "📥 Pulling latest image..."   
             echo "pullingo..." + "$DOTNET_IMAGE_TAG"         
