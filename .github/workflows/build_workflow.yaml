@@ -1,4 +1,4 @@
-name: DOTNET API Build
+name: DOTNET Build API
 
 on:
   workflow_dispatch:
@@ -21,19 +21,13 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GHCR_PAT }}
       
-      - name: 🔧 Set image tag
-        run: echo "DOTNET_IMAGE_TAG=${{ github.ref_name }}-v-${{ github.run_number }}" >> $GITHUB_ENV
-
-      - name: Save tag for downstream workflows
+      - name: Set environment variable for image tag
         run: |
-            echo '${{ env.DOTNET_IMAGE_TAG }}'
-            echo '${{ env.DOTNET_IMAGE_TAG }}' > DOTNET_IMAGE_TAG.txt
-
-      - name: Upload image tag artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: DOTNET_IMAGE_TAG
-          path: DOTNET_IMAGE_TAG.txt
+          curl -X PUT \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/variables/DOTNET_IMAGE_TAG \
+            -d '{"name":"DOTNET_IMAGE_TAG","value":"${{ github.ref_name }}-v-${{ github.run_number }}"}'
 
           
       #- name: Build and push ms sql image to GitHub Container Registry
@@ -52,5 +46,5 @@ jobs:
           context: .
           file: ./dotnet-api/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-dotnet-api:${{ env.DOTNET_IMAGE_TAG }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-dotnet-api:${{ vars.DOTNET_IMAGE_TAG }}
           
