@@ -94,7 +94,7 @@ jobs:
             echo "❌ Coverage report not found."
             exit 1
           fi
-          COVERAGE_RATE=$(xmllint --xpath "string(//coverage/@line-rate)" "$COVERAGE_FILE")
+          COVERAGE_RATE=$(xmllint --xpath "string(//Summary/Linecoverage)" "$COVERAGE_FILE")
           COVERAGE_PERCENT=$(echo "$COVERAGE_RATE * 100" | bc | cut -d'.' -f1)
           echo "✅ Code coverage: $COVERAGE_PERCENT%"
           if [ "$COVERAGE_PERCENT" -lt 70 ]; then
