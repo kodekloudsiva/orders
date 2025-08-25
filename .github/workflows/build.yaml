@@ -40,7 +40,7 @@ jobs:
       - name: verify file structure
         run: | 
             pwd
-            ls -lrta orders/orders.test
+            ls -lrta orders/orders.test/CoverageReport
 
       - name: Run unit tests with coverage
         run: |
