@@ -6,6 +6,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: ${{ github.repository_owner }}
+  VARIABLE_GIHUB_API: 'https://api.github.com/repos/${{ github.repository_owner }}/${{ github.repository }}/actions/variables'
 
 jobs:
   build-images:
@@ -23,10 +24,11 @@ jobs:
       
       - name: Set environment variable for image tag
         run: |
+          echo '${{ env.VARIABLE_GIHUB_API }}'
           curl -X POST \
             -H "Authorization: Bearer ${{ secrets.GHCR_PAT }}" \
             -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/${{ github.repository_owner }}/${{ github.repository }}/actions/variables \
+            '${{ env.VARIABLE_GIHUB_API }}' \
             -d '{"name":"DOTNET_IMAGE_TAG","value":"${{ github.ref_name }}-v-${{ github.run_number }}"}'
 
           
