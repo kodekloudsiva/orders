@@ -37,6 +37,11 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
+      - name verify file structure
+        run: | 
+            pwd
+            ls -lrta
+
       - name: Run unit tests with coverage
         run: |
           dotnet test ./orders.test/orders.test.csproj \
