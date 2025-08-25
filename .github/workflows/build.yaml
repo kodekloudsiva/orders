@@ -26,30 +26,11 @@ jobs:
       
       - name: Set environment variable for image tag
         run: |
-          echo '${{ env.VARIABLE_GIHUB_API }}'
           curl -X PATCH \
             -H "Authorization: Bearer ${{ secrets.GHCR_PAT }}" \
             -H "Accept: application/vnd.github+json" \
             '${{ env.VARIABLE_GIHUB_API }}/DOTNET_IMAGE_TAG' \
-            -d '{"name":"DOTNET_IMAGE_TAG","value":"${{ env.NEW_DOTNET_IMAGE_TAG }}"}'
-          echo "updated new dotnetimagetag" + ${{ env.NEW_DOTNET_IMAGE_TAG }}
-
-          
-      #- name: Build and push ms sql image to GitHub Container Registry
-      #  uses: docker/build-push-action@v6
-      #  with:
-      #    context: ./ms-sql
-      #    file: ./ms-sql/Dockerfile
-      #    push: true
-      #    tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-ms-sql:v${{ env.TIMESTAMP }}
-      #    build-args: |
-      #      SA_PASSWORD=${{ secrets.SA_PASSWORD }}
-      - name: test dotnet image tag step
-        run: | 
-            echo "new image tag, ${{ env.NEW_DOTNET_IMAGE_TAG }}"
-            echo "current image tag, ${{ github.ref_name }}-v-${{ github.run_number }}"
-            echo "vars dotnetimagetag" + ${{ vars.DOTNET_IMAGE_TAG }}
-            echo "env dotnetimagetag" + ${{ env.DOTNET_IMAGE_TAG }}
+            -d '{"name":"DOTNET_IMAGE_TAG","value":"${{ env.NEW_DOTNET_IMAGE_TAG }}"}'          
       
       - name: Build and push dotnet api image to GitHub Container Registry
         uses: docker/build-push-action@v6
