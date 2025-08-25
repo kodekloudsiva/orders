@@ -21,8 +21,17 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GHCR_PAT }}
       
-      - name: Generate timestamp
-        run: echo "TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+      - name: 🔧 Set image tag
+        run: echo "DOTNET_IMAGE_TAG=v-${{ github.repository }}-${{ github.ref_name }}-${{ github.run_number }}" >> $GITHUB_ENV
+
+      - name: Save tag for downstream workflows
+        run: echo "{{ env.DOTNET_IMAGE_TAG }}" > DOTNET_IMAGE_TAG.txt
+
+      - name: Upload image tag artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DOTNET_IMAGE_TAG
+          path: DOTNET_IMAGE_TAG.txt
           
       #- name: Build and push ms sql image to GitHub Container Registry
       #  uses: docker/build-push-action@v6
@@ -40,5 +49,5 @@ jobs:
           context: .
           file: ./dotnet-api/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-dotnet-api:v${{ env.TIMESTAMP }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-dotnet-api:${{ env.DOTNET_IMAGE_TAG }}
           

@@ -23,6 +23,16 @@ jobs:
       - name: 🛠️ Make install script executable
         run: chmod +x scripts/install-docker.sh
 
+      - name: Download image tag artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: DOTNET_IMAGE_TAG
+
+      - name: Read image tag
+        id: read_tag
+        run: |
+          echo "DOTNET_IMAGE_TAG=$(cat DOTNET_IMAGE_TAG.txt)" >> $GITHUB_ENV
+
       - name: 🔐 Set up SSH key
         run: |
           mkdir -p $SSH_DIRECTORY
@@ -57,10 +67,10 @@ jobs:
             cd $REMOTE_APP_DIR
 
             echo "📥 Pulling latest image..."            
-            SA_PASSWORD="$SA_PASSWORD" sudo docker compose -f $COMPOSE_FILE_NAME pull
+            SA_PASSWORD="$SA_PASSWORD" DOTNET_IMAGE_TAG="${{ env.DOTNET_IMAGE_TAG }}" sudo docker compose -f $COMPOSE_FILE_NAME pull
 
             echo "🧱 Starting containers..."
-            SA_PASSWORD="$SA_PASSWORD" sudo docker compose -f $COMPOSE_FILE_NAME up -d
+            SA_PASSWORD="$SA_PASSWORD" DOTNET_IMAGE_TAG="${{ env.DOTNET_IMAGE_TAG }}" sudo docker compose -f $COMPOSE_FILE_NAME up -d
 
             echo "✅ Deployment complete."
           EOF
