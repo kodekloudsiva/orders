@@ -31,7 +31,7 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.GHCR_PAT }}" \
             -H "Accept: application/vnd.github+json" \
             '${{ env.VARIABLE_GIHUB_API }}/DOTNET_IMAGE_TAG' \
-            -d '{"name":"DOTNET_IMAGE_TAG","value":${{ env.NEW_DOTNET_IMAGE_TAG }}}'
+            -d '{"name":"DOTNET_IMAGE_TAG","value":"${{ env.NEW_DOTNET_IMAGE_TAG }}"}'
           echo "updated new dotnetimagetag" + ${{ env.NEW_DOTNET_IMAGE_TAG }}
 
           
