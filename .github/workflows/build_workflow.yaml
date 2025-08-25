@@ -34,8 +34,11 @@ jobs:
           name: DOTNET_IMAGE_TAG
           path: DOTNET_IMAGE_TAG.txt
 
-      - name: validate DOTNET_IMAGE_TAG
-        run: ls -lrt
+      - name: validate image tag file
+        run: | 
+            ls -lrt
+            cat DOTNET_IMAGE_TAG.txt
+
           
       #- name: Build and push ms sql image to GitHub Container Registry
       #  uses: docker/build-push-action@v6
