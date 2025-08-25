@@ -1,4 +1,4 @@
-name: Build MS SQL & DOTNET API Workflow
+name: DOTNET API Build
 
 on:
   workflow_dispatch:
@@ -34,11 +34,6 @@ jobs:
         with:
           name: DOTNET_IMAGE_TAG
           path: DOTNET_IMAGE_TAG.txt
-
-      - name: validate image tag file
-        run: | 
-            ls -lrt
-            cat DOTNET_IMAGE_TAG.txt
 
           
       #- name: Build and push ms sql image to GitHub Container Registry
