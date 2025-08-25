@@ -19,7 +19,7 @@ jobs:
       REMOTE_APP_DIR: /home/ubuntu/app
       COMPOSE_FILE_NAME: docker-compose-sql.yml
       SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
-
+      DOTNET_IMAGE_TAG: ${{ vars.DOTNET_IMAGE_TAG }}
     steps:
       - name: ✅ Checkout code
         uses: actions/checkout@v4
@@ -61,10 +61,10 @@ jobs:
             cd $REMOTE_APP_DIR
 
             echo "📥 Pulling latest image..."            
-            SA_PASSWORD="$SA_PASSWORD" DOTNET_IMAGE_TAG="${{ vars.DOTNET_IMAGE_TAG }}" sudo docker compose -f $COMPOSE_FILE_NAME pull
+            SA_PASSWORD="$SA_PASSWORD" DOTNET_IMAGE_TAG="$DOTNET_IMAGE_TAG" sudo docker compose -f $COMPOSE_FILE_NAME pull
 
             echo "🧱 Starting containers..."
-            SA_PASSWORD="$SA_PASSWORD" DOTNET_IMAGE_TAG="${{ vars.DOTNET_IMAGE_TAG }}" sudo docker compose -f $COMPOSE_FILE_NAME up -d
+            SA_PASSWORD="$SA_PASSWORD" DOTNET_IMAGE_TAG="$DOTNET_IMAGE_TAG" sudo docker compose -f $COMPOSE_FILE_NAME up -d
 
             echo "✅ Deployment complete."
           EOF
