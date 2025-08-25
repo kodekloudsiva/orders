@@ -42,6 +42,11 @@ jobs:
             pwd
             ls -lrta orders/orders.test/CoverageReport
 
+      - name: verify test results structure
+        run: | 
+            pwd
+            ls -lrta orders/orders.test/TestResults
+
       - name: Run unit tests with coverage
         run: |
           dotnet test ./orders/orders.test/orders.test.csproj \
