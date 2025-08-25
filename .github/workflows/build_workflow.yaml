@@ -22,7 +22,7 @@ jobs:
           password: ${{ secrets.GHCR_PAT }}
       
       - name: 🔧 Set image tag
-        run: echo "DOTNET_IMAGE_TAG=v-${{ github.repository }}-${{ github.ref_name }}-${{ github.run_number }}" >> $GITHUB_ENV
+        run: echo "DOTNET_IMAGE_TAG=${{ github.ref_name }}-v-${{ github.run_number }}" >> $GITHUB_ENV
 
       - name: Save tag for downstream workflows
         run: echo "{{ env.DOTNET_IMAGE_TAG }}" > DOTNET_IMAGE_TAG.txt
