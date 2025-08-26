@@ -51,7 +51,7 @@ jobs:
           ls -lrta
           echo "------------------------------------------------------------"
           ls -lrta orders
-          ALL_MIGRATIONS=$(dotnet ef migrations list --startup-project $ORDERS_WEBAPI_PROJECT_PATH --project $ORDERS_DATABASE_PROJECT_PATH --context OrderDbContext)
+          ALL_MIGRATIONS=$(dotnet ef migrations list --startup-project $ORDERS_WEBAPI_PROJECT_PATH --project $ORDERS_DATABASE_PROJECT_PATH --context OrderDbContext --no-build --no-connect)
           echo "$ALL_MIGRATIONS"
 
           LAST=$(echo "$ALL_MIGRATIONS" | grep -v '\[Applied\]' | tail -n 1 | awk '{print $1}')
