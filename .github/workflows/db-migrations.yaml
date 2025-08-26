@@ -41,6 +41,8 @@ jobs:
           echo "📋 Checking EF Core migrations..."
           pwd
           ls -lrta
+          echo "------------------------------------------------------------"
+          ls -lrta orders
           ALL_MIGRATIONS=$(dotnet ef migrations list --startup-project $ORDERS_WEBAPI_PROJECT_PATH --project $ORDERS_DATABASE_PROJECT_PATH --context OrderDbContext)
           echo "$ALL_MIGRATIONS"
 
