@@ -22,8 +22,8 @@ ARG OUTPUT_SCRIPT=sql-scripts/migration.sql
 
 RUN mkdir -p sql-scripts && \
     dotnet ef migrations script $FROM_MIGRATION $TO_MIGRATION \
-      --project orders.database \
-      --startup-project orders.api \
+      --project ./orders/orders.database \
+      --startup-project ./orders/orders.webapi \
       --context OrderDbContext \
       --idempotent \
       -o $OUTPUT_SCRIPT
