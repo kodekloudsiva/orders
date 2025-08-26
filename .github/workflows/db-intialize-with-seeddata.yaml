@@ -19,7 +19,7 @@ jobs:
   onetime-db-deploy:
     runs-on: ubuntu-latest
     env:      
-      SQL_COMPOSE_FILE: $CICD_SQL/docker-compose-sql.yml
+      SQL_COMPOSE_FILE: $CICD_SQL/docker-compose-sql.yaml
       SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
     steps:
       - name: ✅ Checkout code
