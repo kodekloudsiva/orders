@@ -3,7 +3,7 @@ name: DOTNET Deploy API
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ["DOTNET Build API"]   # <== Name of build.yaml workflow
+    workflows: ["Generate & Apply DB Migrations"]   # <== Name of build.yaml workflow
     types:
       - completed
 

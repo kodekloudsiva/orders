@@ -1,7 +1,11 @@
-name: DB Migrations
+name: Generate & Apply DB Migrations
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Test, Build & Push API Docker Image"]   # <== Name of build.yaml workflow
+    types:
+      - completed
 
 env:
   REGISTRY: ghcr.io

@@ -1,4 +1,4 @@
-name: DOTNET Build API
+name: Test, Build & Push API Docker Image
 
 on:
   workflow_dispatch:

@@ -1,4 +1,4 @@
-name: DB Deploy
+name: Initialize DB with Seed data
 
 on:
   workflow_dispatch:
