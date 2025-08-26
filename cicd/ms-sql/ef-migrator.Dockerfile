@@ -10,6 +10,9 @@ WORKDIR /src
 
 COPY . .
 
+RUN pwd
+RUN ls -lrta
+
 RUN dotnet restore
 RUN dotnet build --no-restore
 
