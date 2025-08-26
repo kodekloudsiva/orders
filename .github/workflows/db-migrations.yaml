@@ -51,29 +51,31 @@ jobs:
           ls -lrta
           echo "------------------------------------------------------------"
           ls -lrta orders
-          ALL_MIGRATIONS=$(dotnet ef migrations list --startup-project $ORDERS_WEBAPI_PROJECT_PATH --project $ORDERS_DATABASE_PROJECT_PATH --context OrderDbContext --no-build --no-connect)
+          ALL_MIGRATIONS=$(dotnet ef migrations list \
+            --startup-project $ORDERS_WEBAPI_PROJECT_PATH \
+            --project $ORDERS_DATABASE_PROJECT_PATH \
+            --context OrderDbContext \
+            --no-build --no-connect)
+
           echo "$ALL_MIGRATIONS"
 
           LAST=$(echo "$ALL_MIGRATIONS" | grep -v '\[Applied\]' | tail -n 1 | awk '{print $1}')
           PREV=$(echo "$ALL_MIGRATIONS" | grep '\[Applied\]' | tail -n 1 | awk '{print $1}')
 
-          # Default PREV to "0" if empty
+          # Default PREV to 0 if nothing applied
           if [[ -z "$PREV" ]]; then
             PREV=0
           fi
 
-          echo "LAST_MIGRATION=$LAST" >> $GITHUB_OUTPUT
-          echo "PREVIOUS_MIGRATION=$PREV" >> $GITHUB_OUTPUT
-
-          echo "LAST_MIGRATION: " + $LAST_MIGRATION
-          echo "PREVIOUS_MIGRATION: " + $PREVIOUS_MIGRATION
-
+          # If no LAST migration found, skip
           if [[ -z "$LAST" || "$LAST" == "$PREV" ]]; then
             echo "✅ No new migrations to apply."
             echo "SKIP_MIGRATION=true" >> $GITHUB_OUTPUT
           else
             echo "🟡 New migration to apply: $LAST"
             echo "SKIP_MIGRATION=false" >> $GITHUB_OUTPUT
+            echo "LAST_MIGRATION=$LAST" >> $GITHUB_OUTPUT
+            echo "PREVIOUS_MIGRATION=$PREV" >> $GITHUB_OUTPUT
           fi
 
       - name: Build EF Migrator Docker Image
