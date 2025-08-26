@@ -15,7 +15,6 @@ env:
 
 jobs:
   db-generate-and-apply-migrations:
-    needs: [code-unit-test-and-coverage]
     runs-on: ubuntu-latest
     env:
       CICD_SQL: cicd/ms-sql/

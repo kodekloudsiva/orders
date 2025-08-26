@@ -80,7 +80,7 @@ jobs:
           fi
 
   code-build-and-push-dockerimage:
-    needs: [code-unit-test-and-coverage, db-generate-and-apply-migrations]
+    needs: [code-unit-test-and-coverage]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code

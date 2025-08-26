@@ -18,8 +18,6 @@ jobs:
 
   onetime-db-deploy:
     runs-on: ubuntu-latest
-    needs: [code-unit-test-and-coverage]
-
     env:      
       SQL_COMPOSE_FILE: $CICD_SQL/docker-compose-sql.yml
       SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
