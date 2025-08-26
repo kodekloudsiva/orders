@@ -8,6 +8,7 @@ env:
   IMAGE_OWNER: ${{ github.repository_owner }}
   VARIABLE_GITHUB_API: https://api.github.com/repos/${{ github.repository }}/actions/variables
   NEW_DOTNET_IMAGE_TAG: ${{ github.ref_name }}-v-${{ github.run_number }}
+  CICD_API: cicd/dotnet-api/
 
 jobs:
   code-unit-test-and-coverage:
@@ -103,7 +104,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./dotnet-api/Dockerfile
+          file: $CICD_API/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-dotnet-api:${{ env.NEW_DOTNET_IMAGE_TAG }}
 
