@@ -16,9 +16,11 @@ jobs:
       SSH_KEY_PATH: /home/runner/.ssh/id_rsa
       DOTNET_API_REMOTE_APP_DIR: /home/ubuntu/app/dotnet-api
       REMOTE_USER: ubuntu
-      API_COMPOSE_FILE: ./cicd/dotnet-api/docker-compose-api.yaml
+      API_COMPOSE_FILE: docker-compose-api.yaml
       REMOTE_HOST: ${{ vars.TARGET_DEPLOY_SERVER }}
       DOTNET_IMAGE_TAG: ${{ vars.DOTNET_IMAGE_TAG }}
+      CICD_API: cicd/dotnet-api/
+      CICD_SCRIPTS: cicd/scripts/
     steps:
       - name: ✅ Checkout code
         uses: actions/checkout@v4
@@ -38,8 +40,8 @@ jobs:
       - name: 📤 Copy files to remote server
         run: |
           ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST "mkdir -p $DOTNET_API_REMOTE_APP_DIR"
-          scp -i $SSH_KEY_PATH $API_COMPOSE_FILE $REMOTE_USER@$REMOTE_HOST:$DOTNET_API_REMOTE_APP_DIR/
-          scp -i $SSH_KEY_PATH cicd/scripts/install-docker.sh $REMOTE_USER@$REMOTE_HOST:$DOTNET_API_REMOTE_APP_DIR/
+          scp -i $SSH_KEY_PATH $CICD_API/$API_COMPOSE_FILE $REMOTE_USER@$REMOTE_HOST:$DOTNET_API_REMOTE_APP_DIR/
+          scp -i $SSH_KEY_PATH $CICD_SCRIPTS/install-docker.sh $REMOTE_USER@$REMOTE_HOST:$DOTNET_API_REMOTE_APP_DIR/
 
       - name: 🐳 Install Docker if needed
         run: ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST "bash $DOTNET_API_REMOTE_APP_DIR/install-docker.sh"
