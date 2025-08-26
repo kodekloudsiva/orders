@@ -7,8 +7,6 @@ services:
       - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=OrdersDb;User Id=sa;Password=${SA_PASSWORD};
     ports:
       - "5000:9090"
-    depends_on:
-      - sqlserver
     networks:
       - app-network
 
