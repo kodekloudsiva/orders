@@ -13,7 +13,7 @@ env:
   CICD_API: cicd/dotnet-api/
   CICD_SQL: cicd/ms-sql/
   CICD_SCRIPTS: cicd/scripts/
-  SQL_COMPOSE_FILE: CICD_SQL/docker-compose-sql.yaml
+  SQL_COMPOSE_FILE: cicd/ms-sql/docker-compose-sql.yaml
   SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
 
 jobs:
@@ -44,7 +44,7 @@ jobs:
 
           # Copy sql docker-compose file and install script
           scp -i $SSH_KEY_PATH $SQL_COMPOSE_FILE $REMOTE_USER@$REMOTE_HOST:$SQL_REMOTE_APP_DIR/
-          scp -i $SSH_KEY_PATH scripts/install-docker.sh $REMOTE_USER@$REMOTE_HOST:$SQL_REMOTE_APP_DIR/
+          scp -i $SSH_KEY_PATH $CICD_SCRIPTS/install-docker.sh $REMOTE_USER@$REMOTE_HOST:$SQL_REMOTE_APP_DIR/
 
       - name: 🐳 Install Docker if needed
         run: |
