@@ -53,12 +53,12 @@ jobs:
           LAST_MIGRATION=$(dotnet ef migrations list \
             --project orders/orders.database \
             --startup-project orders/orders.webapi \
-            --context OrderDbContext | tail -1 || true)
+            --context OrderDbContext --no-build --no-connect | tail -1 || true)
 
           PREVIOUS_MIGRATION=$(dotnet ef migrations list \
             --project orders/orders.database \
             --startup-project orders/orders.webapi \
-            --context OrderDbContext | tail -2 | head -1 || true)
+            --context OrderDbContext --no-build --no-connect | tail -2 | head -1 || true)
 
           echo "LAST_MIGRATION=$LAST_MIGRATION"
           echo "PREVIOUS_MIGRATION=$PREVIOUS_MIGRATION"
