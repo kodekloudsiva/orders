@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:  
+  dotnet-api:
+    image: ghcr.io/kodekloudsiva/siva-dotnet-api:${DOTNET_IMAGE_TAG}
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=OrdersDb;User Id=sa;Password=${SA_PASSWORD};
+    ports:
+      - "5000:9090"
+    depends_on:
+      - sqlserver
+    networks:
+      - app-network
+
+volumes:
+  sqlserverdata:
+
+networks:
+  app-network:

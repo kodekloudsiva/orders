@@ -1,0 +1,73 @@
+name: DB Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  env:
+    REMOTE_USER: ubuntu
+    REMOTE_HOST: ${{ vars.TARGET_DEPLOY_SERVER }}
+    SQL_REMOTE_APP_DIR: /home/ubuntu/app/ms-sql
+    SSH_DIRECTORY: /home/runner/.ssh
+    SSH_KEY_PATH: /home/runner/.ssh/id_rsa
+    CICD: cicd/
+    CICD_API: cicd/dotnet-api/
+    CICD_SQL: cicd/ms-sql/
+    CICD_SCRIPTS: cicd/scripts/
+
+  onetime-db-deploy:
+    runs-on: ubuntu-latest
+    needs: [code-unit-test-and-coverage]
+
+    env:      
+      SQL_COMPOSE_FILE: $CICD_SQL/docker-compose-sql.yml
+      SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
+    steps:
+      - name: ✅ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Make install script executable
+        run: chmod +x $CICD_SCRIPTS/install-docker.sh
+
+      - name: 🔐 Set up SSH key
+        run: |
+          mkdir -p $SSH_DIRECTORY
+          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > $SSH_KEY_PATH
+          chmod 600 $SSH_KEY_PATH
+
+      - name: 📡 Add remote host to known_hosts
+        run: |
+          ssh-keyscan -H "$REMOTE_HOST" >> $SSH_DIRECTORY/known_hosts
+
+      - name: 📤 Copy files to remote server
+        run: |
+          # Create remote app directory
+          ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST "mkdir -p $SQL_REMOTE_APP_DIR"
+
+          # Copy sql docker-compose file and install script
+          scp -i $SSH_KEY_PATH $SQL_COMPOSE_FILE $REMOTE_USER@$REMOTE_HOST:$SQL_REMOTE_APP_DIR/
+          scp -i $SSH_KEY_PATH scripts/install-docker.sh $REMOTE_USER@$REMOTE_HOST:$SQL_REMOTE_APP_DIR/
+
+      - name: 🐳 Install Docker if needed
+        run: |
+          ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST "bash $SQL_REMOTE_APP_DIR/install-docker.sh"
+
+      - name: 🚀 Deploy application
+        run: |
+          ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST << EOF
+            set -e           
+
+            cd $SQL_REMOTE_APP_DIR
+
+            echo "📝 Writing environment variables to .env file..."
+            echo "SA_PASSWORD=${{ secrets.SA_PASSWORD }}" >> .env
+
+            echo "📥 Pulling latest image..."   
+            sudo docker compose --env-file .env -f $SQL_COMPOSE_FILE pull
+
+            echo "🧱 Starting containers..."
+            sudo docker compose --env-file .env -f $SQL_COMPOSE_FILE up -d
+
+            echo "✅ Deployment complete."
+          EOF

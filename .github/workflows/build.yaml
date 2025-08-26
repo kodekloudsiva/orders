@@ -6,25 +6,15 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: ${{ github.repository_owner }}
-  VARIABLE_GITHUB_API: 'https://api.github.com/repos/${{ github.repository }}/actions/variables'
+  VARIABLE_GITHUB_API: https://api.github.com/repos/${{ github.repository }}/actions/variables
   NEW_DOTNET_IMAGE_TAG: ${{ github.ref_name }}-v-${{ github.run_number }}
 
 jobs:
-  checkout:
+  code-unit-test-and-coverage:
     runs-on: ubuntu-latest
-    outputs:
-      image_tag: ${{ steps.set_tag.outputs.image_tag }}
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-
-      - name: Set image tag output
-        id: set_tag
-        run: echo "image_tag=${{ env.NEW_DOTNET_IMAGE_TAG }}" >> $GITHUB_OUTPUT
-
-  test-and-coverage:
-    needs: checkout
-    runs-on: ubuntu-latest
+    env:
+      ORDERS_WEBAPI_PROJECT_PATH: './orders/orders.webapi'
+      ORDERS_DATABASE_PROJECT_PATH: ./orders/orders.database
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -36,6 +26,9 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore
+
+      - name: Install bc
+        run: sudo apt-get update && sudo apt-get install -y bc
 
       - name: Run unit tests with coverage
         run: |
@@ -70,7 +63,7 @@ jobs:
           path: CoverageReport/
 
       - name: Install xmllint
-        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+        run: sudo apt-get install -y libxml2-utils
 
       - name: Validate 65% code coverage threshold
         run: |
@@ -79,15 +72,15 @@ jobs:
             echo "❌ Coverage report not found."
             exit 1
           fi
-          COVERAGE_PERCENT=$(xmllint --xpath "string(//Summary/Linecoverage)" "$COVERAGE_FILE")          
+          COVERAGE_PERCENT=$(xmllint --xpath "string(//Summary/Linecoverage)" "$COVERAGE_FILE")
           echo "✅ Code coverage: $COVERAGE_PERCENT%"
           if echo "$COVERAGE_PERCENT < 65" | bc -l | grep -q 1; then
             echo "❌ Code coverage ($COVERAGE_PERCENT%) is below the 65% threshold."
             exit 1
           fi
 
-  build-and-push:
-    needs: [checkout, test-and-coverage]
+  code-build-and-push-dockerimage:
+    needs: [code-unit-test-and-coverage, db-generate-and-apply-migrations]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
@@ -115,3 +108,5 @@ jobs:
           file: ./dotnet-api/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-dotnet-api:${{ env.NEW_DOTNET_IMAGE_TAG }}
+
+  

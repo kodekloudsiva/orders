@@ -1,0 +1,102 @@
+name: DB Migrations
+
+on:
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: ${{ github.repository_owner }}
+  VARIABLE_GITHUB_API: https://api.github.com/repos/${{ github.repository }}/actions/variables
+  NEW_DOTNET_IMAGE_TAG: ${{ github.ref_name }}-v-${{ github.run_number }}
+
+jobs:
+  db-generate-and-apply-migrations:
+    needs: [code-unit-test-and-coverage]
+    runs-on: ubuntu-latest
+    env:
+      CICD_SQL: cicd/ms-sql/
+      CICD_SCRIPTS: cicd/scripts/
+      ORDERS_WEBAPI_PROJECT_PATH: './orders/orders.webapi'
+      ORDERS_DATABASE_PROJECT_PATH: ./orders/orders.database
+      SQL_HOST: ${{ vars.TARGET_DEPLOY_SERVER }}
+      SQL_PORT: 1433
+      SQL_DB: OrdersDb
+      SQL_SA_USER: SA
+      SQL_PASS: ${{ secrets.DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Get latest and previous EF Core migration
+        id: migrations
+        run: |
+          echo "📋 Checking EF Core migrations..."
+          ALL_MIGRATIONS=$(dotnet ef migrations list --startup-project $ORDERS_WEBAPI_PROJECT_PATH --project $ORDERS_DATABASE_PROJECT_PATH --context OrderDbContext)
+          echo "$ALL_MIGRATIONS"
+
+          LAST=$(echo "$ALL_MIGRATIONS" | grep -v '\[Applied\]' | tail -n 1 | awk '{print $1}')
+          PREV=$(echo "$ALL_MIGRATIONS" | grep '\[Applied\]' | tail -n 1 | awk '{print $1}')
+
+          echo "LAST_MIGRATION=$LAST" >> $GITHUB_OUTPUT
+          echo "PREVIOUS_MIGRATION=$PREV" >> $GITHUB_OUTPUT
+
+          if [[ -z "$LAST" || "$LAST" == "$PREV" ]]; then
+            echo "✅ No new migrations to apply."
+            echo "SKIP_MIGRATION=true" >> $GITHUB_OUTPUT
+          else
+            echo "🟡 New migration to apply: $LAST"
+            echo "SKIP_MIGRATION=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build EF Migrator Docker Image
+        if: steps.migrations.outputs.SKIP_MIGRATION == 'false'
+        run: |
+          docker build --no-cache -f $CICD_SQL/ef-migrator.Dockerfile . \
+            --build-arg FROM_MIGRATION=${{ steps.migrations.outputs.PREVIOUS_MIGRATION }} \
+            --build-arg TO_MIGRATION=${{ steps.migrations.outputs.LAST_MIGRATION }} \
+            --build-arg OUTPUT_SCRIPT=$CICD_SCRIPTS/migration.sql \
+            -t ef-migrator
+
+      - name: Extract SQL script from EF Migrator container
+        if: steps.migrations.outputs.SKIP_MIGRATION == 'false'
+        run: |
+          docker create --name temp_migrator ef-migrator
+          docker cp temp_migrator:sql-scripts/migration.sql ./migration.sql
+          docker rm temp_migrator
+
+      - name: Upload SQL migration script as artifact
+        if: steps.migrations.outputs.SKIP_MIGRATION == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: efcore-migration-sql
+          path: ./migration.sql
+
+      - name: Check DB connectivity before applying migration
+        if: steps.migrations.outputs.SKIP_MIGRATION == 'false'
+        run: |
+          echo "🔌 Testing database connection..."
+          timeout 15 bash -c "</dev/tcp/$SQL_HOST/$SQL_PORT" && echo "✅ Database is reachable." || (echo "❌ Database is not reachable." && exit 1)
+
+      - name: Build SQL Applier Docker Image
+        if: steps.migrations.outputs.SKIP_MIGRATION == 'false'
+        run: |
+          docker build -f $CICD_SQL/sql-applier.Dockerfile . -t sql-applier
+
+      - name: Run SQL Applier to apply migration
+        if: steps.migrations.outputs.SKIP_MIGRATION == 'false'
+        run: |
+          docker run --rm \
+            -e DB_HOST=$SQL_HOST,$SQL_PORT \
+            -e DB_NAME=$SQL_DB \
+            -e DB_USER=$SQL_SA_USER \
+            -e DB_PASS=$SQL_PASS \
+            -v ${{ github.workspace }}/migration.sql:/app/migration.sql \
+            sql-applier
+
+      - name: Log migration status (always runs)
+        if: always()
+        run: echo "🔚 Migration job complete."

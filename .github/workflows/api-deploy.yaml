@@ -8,24 +8,23 @@ on:
       - completed
 
 jobs:
-  deploy:
+  code-deploy:
     runs-on: ubuntu-latest
-
+    needs: [code-unit-test-and-coverage, code-build-and-push-dockerimage, db-generate-and-apply-migrations]
     env:
-      REMOTE_USER: ubuntu
-      REMOTE_HOST: ${{ vars.TARGET_DEPLOY_SERVER }}
       SSH_DIRECTORY: /home/runner/.ssh
       SSH_KEY_PATH: /home/runner/.ssh/id_rsa
-      REMOTE_APP_DIR: /home/ubuntu/app
-      COMPOSE_FILE_NAME: docker-compose-sql.yml
-      SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
+      DOTNET_API_REMOTE_APP_DIR: /home/ubuntu/app/dotnet-api
+      REMOTE_USER: ubuntu
+      API_COMPOSE_FILE: ./cicd/dotnet-api/docker-compose-api.yaml
+      REMOTE_HOST: ${{ vars.TARGET_DEPLOY_SERVER }}
       DOTNET_IMAGE_TAG: ${{ vars.DOTNET_IMAGE_TAG }}
     steps:
       - name: ✅ Checkout code
         uses: actions/checkout@v4
 
       - name: 🛠️ Make install script executable
-        run: chmod +x scripts/install-docker.sh
+        run: chmod +x cicd/scripts/install-docker.sh
 
       - name: 🔐 Set up SSH key
         run: |
@@ -34,41 +33,30 @@ jobs:
           chmod 600 $SSH_KEY_PATH
 
       - name: 📡 Add remote host to known_hosts
-        run: |
-          ssh-keyscan -H "$REMOTE_HOST" >> $SSH_DIRECTORY/known_hosts
+        run: ssh-keyscan -H "$REMOTE_HOST" >> $SSH_DIRECTORY/known_hosts
 
       - name: 📤 Copy files to remote server
         run: |
-          # Create remote app directory
-          ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST "mkdir -p $REMOTE_APP_DIR"
-
-          # Copy docker-compose file and install script
-          scp -i $SSH_KEY_PATH $COMPOSE_FILE_NAME $REMOTE_USER@$REMOTE_HOST:$REMOTE_APP_DIR/
-          scp -i $SSH_KEY_PATH scripts/install-docker.sh $REMOTE_USER@$REMOTE_HOST:$REMOTE_APP_DIR/
+          ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST "mkdir -p $DOTNET_API_REMOTE_APP_DIR"
+          scp -i $SSH_KEY_PATH $API_COMPOSE_FILE $REMOTE_USER@$REMOTE_HOST:$DOTNET_API_REMOTE_APP_DIR/
+          scp -i $SSH_KEY_PATH cicd/scripts/install-docker.sh $REMOTE_USER@$REMOTE_HOST:$DOTNET_API_REMOTE_APP_DIR/
 
       - name: 🐳 Install Docker if needed
-        run: |
-          ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST "bash $REMOTE_APP_DIR/install-docker.sh"
+        run: ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST "bash $DOTNET_API_REMOTE_APP_DIR/install-docker.sh"
 
       - name: 🚀 Deploy application
         run: |
           ssh -i $SSH_KEY_PATH $REMOTE_USER@$REMOTE_HOST << EOF
             set -e
-
             echo "🔐 Logging into GHCR..."
             echo "${{ secrets.GHCR_PAT }}" | sudo docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-
-            cd $REMOTE_APP_DIR
-
+            cd $DOTNET_API_REMOTE_APP_DIR
             echo "📝 Writing environment variables to .env file..."
             echo "DOTNET_IMAGE_TAG=${{ vars.DOTNET_IMAGE_TAG }}" > .env
             echo "SA_PASSWORD=${{ secrets.SA_PASSWORD }}" >> .env
-
             echo "📥 Pulling latest image..."   
-            sudo docker compose --env-file .env -f $COMPOSE_FILE_NAME pull
-
+            sudo docker compose --env-file .env -f $API_COMPOSE_FILE pull
             echo "🧱 Starting containers..."
-            sudo docker compose --env-file .env -f $COMPOSE_FILE_NAME up -d
-
+            sudo docker compose --env-file .env -f $API_COMPOSE_FILE up -d
             echo "✅ Deployment complete."
           EOF
