@@ -3,18 +3,18 @@ name: Initialize DB with Seed data
 on:
   workflow_dispatch:
 
-jobs:
+env:
+  REMOTE_USER: ubuntu
+  REMOTE_HOST: ${{ vars.TARGET_DEPLOY_SERVER }}
+  SQL_REMOTE_APP_DIR: /home/ubuntu/app/ms-sql
+  SSH_DIRECTORY: /home/runner/.ssh
+  SSH_KEY_PATH: /home/runner/.ssh/id_rsa
+  CICD: cicd/
+  CICD_API: cicd/dotnet-api/
+  CICD_SQL: cicd/ms-sql/
+  CICD_SCRIPTS: cicd/scripts/
 
-  env:
-    REMOTE_USER: ubuntu
-    REMOTE_HOST: ${{ vars.TARGET_DEPLOY_SERVER }}
-    SQL_REMOTE_APP_DIR: /home/ubuntu/app/ms-sql
-    SSH_DIRECTORY: /home/runner/.ssh
-    SSH_KEY_PATH: /home/runner/.ssh/id_rsa
-    CICD: cicd/
-    CICD_API: cicd/dotnet-api/
-    CICD_SQL: cicd/ms-sql/
-    CICD_SCRIPTS: cicd/scripts/
+jobs:
 
   onetime-db-deploy:
     runs-on: ubuntu-latest
