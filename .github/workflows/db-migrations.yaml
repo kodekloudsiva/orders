@@ -20,8 +20,8 @@ jobs:
     env:
       CICD_SQL: cicd/ms-sql/
       CICD_SCRIPTS: cicd/scripts/
-      ORDERS_WEBAPI_PROJECT_PATH: './orders/orders.webapi'
-      ORDERS_DATABASE_PROJECT_PATH: ./orders/orders.database
+      ORDERS_WEBAPI_PROJECT_PATH: 'orders/orders.webapi'
+      ORDERS_DATABASE_PROJECT_PATH: orders/orders.database
       SQL_HOST: ${{ vars.TARGET_DEPLOY_SERVER }}
       SQL_PORT: 1433
       SQL_DB: OrdersDb
