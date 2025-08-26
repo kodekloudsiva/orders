@@ -43,34 +43,36 @@ jobs:
       - name: Add .NET tools to PATH
         run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
-      # Get latest & previous migrations
       - name: Get migrations
         env: 
           ConnectionStrings__DefaultConnection: "Server=DummyServer;Database=DummyDb;User Id=sa;Password=DummyPassword;"
         id: migrations
         run: |
           echo "📋 Checking EF Core migrations..."
-          LAST_MIGRATION=$(dotnet ef migrations list \
+
+          # Get the list of migrations
+          MIGRATIONS=$(dotnet ef migrations list \
             --project orders/orders.database \
             --startup-project orders/orders.webapi \
-            --context OrderDbContext --no-build --no-connect | tail -1 || true)
+            --context OrderDbContext --no-build --no-connect || true)
 
-          PREVIOUS_MIGRATION=$(dotnet ef migrations list \
-            --project orders/orders.database \
-            --startup-project orders/orders.webapi \
-            --context OrderDbContext --no-build --no-connect | tail -2 | head -1 || true)
+          echo "MIGRATIONS FOUND:"
+          echo "$MIGRATIONS"
 
-          echo "LAST_MIGRATION=$LAST_MIGRATION"
-          echo "PREVIOUS_MIGRATION=$PREVIOUS_MIGRATION"
-
-          if [ -z "$LAST_MIGRATION" ]; then
+          # Check if any migration exists
+          if [[ -z "$MIGRATIONS" ]]; then
             echo "HAS_MIGRATIONS=false" >> $GITHUB_OUTPUT
           else
-            echo "HAS_MIGRATIONS=true" >> $GITHUB_OUTPUT
-          fi
+            LAST_MIGRATION=$(echo "$MIGRATIONS" | tail -1)
+            PREVIOUS_MIGRATION=$(echo "$MIGRATIONS" | tail -2 | head -1)
 
-          echo "LAST_MIGRATION=$LAST_MIGRATION" >> $GITHUB_OUTPUT
-          echo "PREVIOUS_MIGRATION=$PREVIOUS_MIGRATION" >> $GITHUB_OUTPUT
+            echo "HAS_MIGRATIONS=true" >> $GITHUB_OUTPUT
+            echo "LAST_MIGRATION=$LAST_MIGRATION" >> $GITHUB_OUTPUT
+            echo "PREVIOUS_MIGRATION=$PREVIOUS_MIGRATION" >> $GITHUB_OUTPUT
+
+            echo "LAST_MIGRATION=$LAST_MIGRATION"
+            echo "PREVIOUS_MIGRATION=$PREVIOUS_MIGRATION"
+          fi
 
       - name: Set migration args
         if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
