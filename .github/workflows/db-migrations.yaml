@@ -57,6 +57,11 @@ jobs:
           LAST=$(echo "$ALL_MIGRATIONS" | grep -v '\[Applied\]' | tail -n 1 | awk '{print $1}')
           PREV=$(echo "$ALL_MIGRATIONS" | grep '\[Applied\]' | tail -n 1 | awk '{print $1}')
 
+          # Default PREV to "0" if empty
+          if [[ -z "$PREV" ]]; then
+            PREV=0
+          fi
+
           echo "LAST_MIGRATION=$LAST" >> $GITHUB_OUTPUT
           echo "PREVIOUS_MIGRATION=$PREV" >> $GITHUB_OUTPUT
 

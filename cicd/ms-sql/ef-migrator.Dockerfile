@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS builder
 
 # Install EF Core CLI tool globally
-RUN dotnet tool install --global dotnet-ef --version 8.* \
+RUN dotnet tool install --global dotnet-ef --version 9.* \
     && echo "export PATH=\"$PATH:/root/.dotnet/tools\"" >> /root/.bashrc
 
 ENV PATH="$PATH:/root/.dotnet/tools"
