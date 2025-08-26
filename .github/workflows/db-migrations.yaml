@@ -47,10 +47,6 @@ jobs:
           ConnectionStrings__DefaultConnection: "Server=DummyServer;Database=DummyDb;User Id=sa;Password=DummyPassword;"
         run: |
           echo "📋 Checking EF Core migrations..."
-          pwd
-          ls -lrta
-          echo "------------------------------------------------------------"
-          ls -lrta orders
           ALL_MIGRATIONS=$(dotnet ef migrations list \
             --startup-project $ORDERS_WEBAPI_PROJECT_PATH \
             --project $ORDERS_DATABASE_PROJECT_PATH \
