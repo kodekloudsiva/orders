@@ -15,7 +15,7 @@ env:
 
 jobs:
   db-generate-and-apply-migrations:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     env:
       CICD_SQL: cicd/ms-sql/
