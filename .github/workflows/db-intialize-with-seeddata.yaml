@@ -13,14 +13,13 @@ env:
   CICD_API: cicd/dotnet-api/
   CICD_SQL: cicd/ms-sql/
   CICD_SCRIPTS: cicd/scripts/
+  SQL_COMPOSE_FILE: CICD_SQL/docker-compose-sql.yaml
+  SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
 
 jobs:
 
   onetime-db-deploy:
     runs-on: ubuntu-latest
-    env:      
-      SQL_COMPOSE_FILE: $CICD_SQL/docker-compose-sql.yaml
-      SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
     steps:
       - name: ✅ Checkout code
         uses: actions/checkout@v4
