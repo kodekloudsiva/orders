@@ -59,8 +59,11 @@ jobs:
           echo "MIGRATIONS FOUND:"
           echo "$MIGRATIONS"
 
-          # Check if any migration exists
-          if [[ -z "$MIGRATIONS" ]]; then
+          # Trim whitespace
+          MIGRATIONS=$(echo "$MIGRATIONS" | xargs)
+
+          # Check if there are migrations
+          if [[ -z "$MIGRATIONS" || "$MIGRATIONS" == "No migrations were found." ]]; then
             echo "HAS_MIGRATIONS=false" >> $GITHUB_OUTPUT
           else
             LAST_MIGRATION=$(echo "$MIGRATIONS" | tail -1)
