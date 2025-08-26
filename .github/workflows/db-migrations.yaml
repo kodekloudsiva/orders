@@ -58,6 +58,9 @@ jobs:
           echo "LAST_MIGRATION=$LAST" >> $GITHUB_OUTPUT
           echo "PREVIOUS_MIGRATION=$PREV" >> $GITHUB_OUTPUT
 
+          echo "LAST_MIGRATION: " + $LAST_MIGRATION
+          echo "PREVIOUS_MIGRATION: " + $PREVIOUS_MIGRATION
+
           if [[ -z "$LAST" || "$LAST" == "$PREV" ]]; then
             echo "✅ No new migrations to apply."
             echo "SKIP_MIGRATION=true" >> $GITHUB_OUTPUT
