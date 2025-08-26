@@ -16,8 +16,8 @@ RUN ls -lrta
 RUN dotnet restore
 RUN dotnet build --no-restore
 
-ARG FROM_MIGRATION
-ARG TO_MIGRATION
+ARG FROM_MIGRATION=0
+ARG TO_MIGRATION=0
 ARG OUTPUT_SCRIPT=sql-scripts/migration.sql
 
 RUN mkdir -p sql-scripts && \
