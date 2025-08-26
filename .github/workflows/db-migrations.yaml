@@ -45,6 +45,8 @@ jobs:
 
       # Get latest & previous migrations
       - name: Get migrations
+        env: 
+          ConnectionStrings__DefaultConnection: "Server=DummyServer;Database=DummyDb;User Id=sa;Password=DummyPassword;"
         id: migrations
         run: |
           echo "📋 Checking EF Core migrations..."
