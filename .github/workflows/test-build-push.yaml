@@ -12,9 +12,7 @@ env:
 jobs:
   code-unit-test-and-coverage:
     runs-on: ubuntu-latest
-    env:
-      ORDERS_WEBAPI_PROJECT_PATH: './orders/orders.webapi'
-      ORDERS_DATABASE_PROJECT_PATH: ./orders/orders.database
+
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
