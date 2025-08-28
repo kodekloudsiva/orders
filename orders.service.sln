@@ -3,26 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34309.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "order", "order", "{B7671FAC-1368-458E-8870-BB78219E6766}"
-	ProjectSection(SolutionItems) = preProject
-		docker-compose-sql.yml = docker-compose-sql.yml
-		C:\Users\USER\OneDrive\Desktop\dockerfile_dotnet_api = C:\Users\USER\OneDrive\Desktop\dockerfile_dotnet_api
-		C:\Users\USER\OneDrive\Desktop\dockerfile_ms_sql = C:\Users\USER\OneDrive\Desktop\dockerfile_ms_sql
-	EndProjectSection
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "orders.domain", "orders.domain\orders.domain.csproj", "{85D6387A-0D01-4D94-B66C-CC57FA34D35A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "orders.domain", "orders\orders.domain\orders.domain.csproj", "{85D6387A-0D01-4D94-B66C-CC57FA34D35A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "orders.application", "orders.application\orders.application.csproj", "{00A03563-4A12-4163-89DE-F25FBB1C5214}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "orders.application", "orders\orders.application\orders.application.csproj", "{00A03563-4A12-4163-89DE-F25FBB1C5214}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "orders.infrastructure", "orders.infrastructure\orders.infrastructure.csproj", "{BE2A517A-D96E-4390-81E0-1432B9E72F7D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "orders.infrastructure", "orders\orders.infrastructure\orders.infrastructure.csproj", "{BE2A517A-D96E-4390-81E0-1432B9E72F7D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "orders.webapi", "orders.webapi\orders.webapi.csproj", "{C1F50E4A-B8E7-415F-B341-6F98B817C087}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "orders.webapi", "orders\orders.webapi\orders.webapi.csproj", "{C1F50E4A-B8E7-415F-B341-6F98B817C087}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "orders.shared", "orders.shared\orders.shared.csproj", "{E7FA90AC-6CFD-4C54-AA51-ECFB14F37ED1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "orders.shared", "orders\orders.shared\orders.shared.csproj", "{E7FA90AC-6CFD-4C54-AA51-ECFB14F37ED1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "orders.test", "orders.test\orders.test.csproj", "{D8D07CA1-6B62-451C-B719-EA17FFA1E913}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "orders.test", "orders\orders.test\orders.test.csproj", "{D8D07CA1-6B62-451C-B719-EA17FFA1E913}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "orders.database", "orders\orders.database\orders.database.csproj", "{01F2D329-48AC-4F96-9A44-6A6EE6200C04}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "orders.database", "orders.database\orders.database.csproj", "{01F2D329-48AC-4F96-9A44-6A6EE6200C04}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,15 +54,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{85D6387A-0D01-4D94-B66C-CC57FA34D35A} = {B7671FAC-1368-458E-8870-BB78219E6766}
-		{00A03563-4A12-4163-89DE-F25FBB1C5214} = {B7671FAC-1368-458E-8870-BB78219E6766}
-		{BE2A517A-D96E-4390-81E0-1432B9E72F7D} = {B7671FAC-1368-458E-8870-BB78219E6766}
-		{C1F50E4A-B8E7-415F-B341-6F98B817C087} = {B7671FAC-1368-458E-8870-BB78219E6766}
-		{E7FA90AC-6CFD-4C54-AA51-ECFB14F37ED1} = {B7671FAC-1368-458E-8870-BB78219E6766}
-		{D8D07CA1-6B62-451C-B719-EA17FFA1E913} = {B7671FAC-1368-458E-8870-BB78219E6766}
-		{01F2D329-48AC-4F96-9A44-6A6EE6200C04} = {B7671FAC-1368-458E-8870-BB78219E6766}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {75481F71-09CC-4359-891B-768F071FFC58}
