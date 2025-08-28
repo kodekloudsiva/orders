@@ -1,0 +1,78 @@
+@"
+# .NET Core / Visual Studio
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# IDE folders
+.vs/
+.idea/
+*.sln.iml
+
+# Build artifacts
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Compiled binaries
+*.dll
+*.exe
+*.pdb
+
+# Temporary files
+*.cache
+*.config
+*.dbmdl
+*.bak
+*.mdf
+*.ldf
+*.ncb
+*.opensdf
+*.sdf
+
+# Test results
+_TestResults/
+
+# Code coverage results
+coverage/
+*.coverage
+*.coveragexml
+coverage*.json
+lcov.info
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+*.psmdcp
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+!**/[Pp]ackages/tools/
+
+# Azure Functions local settings
+local.settings.json
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+*.log
+
+# ✅ Keep EF Core migrations
+!**/Migrations/
+
+# ✅ Keep Docker + GitHub Actions + YAML configs
+!Dockerfile
+!docker-compose*.yml
+!.github/
+!*.yml
+"@ | Out-File -FilePath .gitignore -Encoding UTF8
