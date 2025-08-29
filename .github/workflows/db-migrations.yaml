@@ -153,7 +153,7 @@ jobs:
       - name: Debug migration sql
         run: |
           ls -lrta ${{ github.workspace }}
-          file ${{ github.workspace }}/migration.sql || echo "migration.sql not found"
+          file ${{ github.workspace }}/sql-migration-scripts/migration.sql || echo "migration.sql not found"
 
       - name: Run SQL Applier to apply migration
         if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
@@ -163,7 +163,7 @@ jobs:
             -e DB_NAME=$SQL_DB \
             -e DB_USER=$SQL_SA_USER \
             -e DB_PASS=$SQL_PASS \            
-            -v ${{ github.workspace }}/migration.sql:/app \
+            -v ${{ github.workspace }}/sql-migration-scripts/migration.sql:/app \
             sql-applier
 
       - name: Log migration status (always runs)
