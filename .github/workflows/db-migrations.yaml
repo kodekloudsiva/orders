@@ -150,6 +150,11 @@ jobs:
         run: |
           docker build -f $CICD_SQL/sql-applier.Dockerfile . -t sql-applier
 
+      - name: Debug migration sql
+        run: |
+          ls -lrta ${{ github.workspace }}
+          file ${{ github.workspace }}/migration.sql || echo "migration.sql not found"
+
       - name: Run SQL Applier to apply migration
         if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
         run: |
@@ -157,9 +162,8 @@ jobs:
             -e DB_HOST=$SQL_HOST,$SQL_PORT \
             -e DB_NAME=$SQL_DB \
             -e DB_USER=$SQL_SA_USER \
-            -e DB_PASS=$SQL_PASS \
-            -v ${{ github.workspace }}/migration.sql:/app/migration.sql \
-            -v ${{ github.workspace }}/migration.sql:/app/ \
+            -e DB_PASS=$SQL_PASS \            
+            -v ${{ github.workspace }}/migration.sql:/app \
             sql-applier
 
       - name: Log migration status (always runs)
