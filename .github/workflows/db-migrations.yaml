@@ -22,8 +22,8 @@ jobs:
     env:
       CICD_SQL: cicd/ms-sql/
       CICD_SCRIPTS: cicd/scripts/
-      ORDERS_WEBAPI_PROJECT_PATH: 'orders/orders.webapi'
-      ORDERS_DATABASE_PROJECT_PATH: orders/orders.database
+      ORDERS_WEBAPI_PROJECT_PATH: 'orders.webapi'
+      ORDERS_DATABASE_PROJECT_PATH: orders.database
       SQL_HOST: ${{ vars.TARGET_DEPLOY_SERVER }}
       SQL_PORT: 1433
       SQL_DB: OrdersDb
@@ -52,8 +52,8 @@ jobs:
 
           # Get the list of migrations
           MIGRATIONS=$(dotnet ef migrations list \
-            --project orders/orders.database \
-            --startup-project orders/orders.webapi \
+            --project orders.database \
+            --startup-project orders.webapi \
             --context OrderDbContext --no-build --no-connect || true)
 
           echo "MIGRATIONS FOUND:"
