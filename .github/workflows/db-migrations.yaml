@@ -85,7 +85,10 @@ jobs:
           echo "OUTPUT_SCRIPT=cicd/scripts/migration.sql" >> $GITHUB_ENV
 
       - name: List project folders
-        run: ls -R ./orders.webapi/obj
+        run: | 
+            pwd
+            ls -lrta
+            ls -R ./orders.webapi/obj
 
       - name: Build EF Migrator Docker Image
         if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
