@@ -31,6 +31,3 @@ RUN dotnet ef migrations script $FROM_MIGRATION $TO_MIGRATION \
 
 FROM scratch AS export-stage
 COPY --from=builder /out/migration.sql .
-
-RUN ls -lrta
-
