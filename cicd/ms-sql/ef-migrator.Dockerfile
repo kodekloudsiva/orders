@@ -18,7 +18,6 @@ RUN dotnet build --no-restore
 
 ARG FROM_MIGRATION=0
 ARG TO_MIGRATION=0
-ARG OUTPUT_SCRIPT=sql-migration-scripts/migration.sql
 
 RUN mkdir -p sql-migration-scripts && \
     pwd && echo "pwd ======================="\
@@ -28,7 +27,11 @@ RUN mkdir -p sql-migration-scripts && \
       --startup-project orders.webapi \
       --context OrderDbContext \
       --idempotent \
-      -o $OUTPUT_SCRIPT
+      --output /out/migration.sql
+
+
+FROM exportscript AS export-stage
+COPY --from=builder /out/migration.sql .
 
 RUN echo "/========================================/" && ls -lrta
 
