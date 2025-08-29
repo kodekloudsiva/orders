@@ -19,7 +19,7 @@ RUN dotnet build --no-restore
 ARG FROM_MIGRATION=0
 ARG TO_MIGRATION=0
 
-RUN mkdir -p sql-migration-scripts && \
+RUN mkdir -p /out && \
     pwd && echo "pwd ======================="\
     ls -lrta && echo "ls -lrta ======================="\
     dotnet ef migrations script $FROM_MIGRATION $TO_MIGRATION \
