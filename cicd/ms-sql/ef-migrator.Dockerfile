@@ -18,7 +18,7 @@ RUN dotnet build --no-restore
 
 ARG FROM_MIGRATION=0
 ARG TO_MIGRATION=0
-ARG OUTPUT_SCRIPT=sql-scripts/migration.sql
+ARG OUTPUT_SCRIPT=sql-migration-scripts/migration.sql
 
 RUN mkdir -p sql-scripts && \
     pwd && echo "pwd ======================="\

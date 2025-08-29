@@ -110,7 +110,7 @@ jobs:
         run: |
           echo "FROM_MIGRATION=${{ steps.migrations.outputs.PREVIOUS_MIGRATION || '0' }}" >> $GITHUB_ENV
           echo "TO_MIGRATION=${{ steps.migrations.outputs.LAST_MIGRATION }}" >> $GITHUB_ENV
-          echo "OUTPUT_SCRIPT=cicd/scripts/migration.sql" >> $GITHUB_ENV          
+          echo "OUTPUT_SCRIPT=sql-migration-scripts/migration.sql" >> $GITHUB_ENV          
       
       - name: Build EF Migrator Docker Image
         if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
@@ -123,14 +123,14 @@ jobs:
           docker build --no-cache -f $CICD_SQL/ef-migrator.Dockerfile \
             --build-arg FROM_MIGRATION=$FROM_MIGRATION \
             --build-arg TO_MIGRATION=$TO_MIGRATION \
-            --build-arg OUTPUT_SCRIPT=sql-scripts/migration.sql \
+            --build-arg OUTPUT_SCRIPT=sql-migration-scripts/migration.sql \
             -t ef-migrator .        
 
       - name: Extract SQL script from EF Migrator container
         if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
         run: |
           docker create --name temp_migrator ef-migrator
-          docker cp temp_migrator:sql-scripts/migration.sql ./migration.sql
+          docker cp temp_migrator:sql-migration-scripts/migration.sql ./migration.sql
           docker rm temp_migrator
 
       - name: Upload SQL migration script as artifact
