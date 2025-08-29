@@ -1,7 +1,7 @@
-name: Initialize DB with Seed data
+name: Deploy DB Container
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:   # manual one-time trigger only
 
 env:
   REMOTE_USER: ubuntu

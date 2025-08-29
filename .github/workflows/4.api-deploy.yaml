@@ -1,11 +1,11 @@
 name: Deploy API
 
 on:
-  workflow_dispatch:
   workflow_run:
-    workflows: ["Generate & Apply DB Migrations"]   # <== Name of build.yaml workflow
+    workflows: ["Build & Push API Docker Image"]   # <== Name of build.yaml workflow
     types:
       - completed
+  workflow_dispatch:   # Optional: allow manual trigger
 
 jobs:
   code-deploy:

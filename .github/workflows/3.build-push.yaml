@@ -1,0 +1,48 @@
+name: Build & Push API Docker Image
+
+on:
+  workflow_run:
+    workflows: ["Generate & Apply DB Migrations"]   # <== Name of build.yaml workflow
+    types:
+      - completed
+  workflow_dispatch:   # Optional: allow manual trigger
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: ${{ github.repository_owner }}
+  VARIABLE_GITHUB_API: https://api.github.com/repos/${{ github.repository }}/actions/variables
+  NEW_DOTNET_IMAGE_TAG: ${{ github.ref_name }}-v-${{ github.run_number }}
+  CICD_API: cicd/dotnet-api/
+
+jobs:
+  code-build-and-push-dockerimage:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Update GitHub environment variable for image tag
+        run: |
+          curl -X PATCH \
+            -H "Authorization: Bearer ${{ secrets.GHCR_PAT }}" \
+            -H "Accept: application/vnd.github+json" \
+            "${{ env.VARIABLE_GITHUB_API }}/DOTNET_IMAGE_TAG" \
+            -d '{"name":"DOTNET_IMAGE_TAG","value":"${{ env.NEW_DOTNET_IMAGE_TAG }}"}'
+
+      - name: Build and push dotnet-api Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: cicd/dotnet-api/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/siva-dotnet-api:${{ env.NEW_DOTNET_IMAGE_TAG }}
+
+  
