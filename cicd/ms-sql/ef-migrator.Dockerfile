@@ -30,7 +30,7 @@ RUN mkdir -p sql-migration-scripts && \
       --output /out/migration.sql
 
 
-FROM exportscript AS export-stage
+FROM scratch AS export-stage
 COPY --from=builder /out/migration.sql .
 
 RUN echo "/========================================/" && ls -lrta
