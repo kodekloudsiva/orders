@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using orders.infrastructure.Data;
 
@@ -11,9 +12,11 @@ using orders.infrastructure.Data;
 namespace orders.database.Migrations
 {
     [DbContext(typeof(OrderDbContext))]
-    partial class OrderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250829092453_ProductEntityAdded")]
+    partial class ProductEntityAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -60,32 +63,9 @@ namespace orders.database.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
                     b.HasKey("ProductId");
 
                     b.ToTable("Products");
-
-                    b.HasData(
-                        new
-                        {
-                            ProductId = 1,
-                            Name = "Laptop",
-                            Price = 75000m
-                        },
-                        new
-                        {
-                            ProductId = 2,
-                            Name = "Headphones",
-                            Price = 2000m
-                        },
-                        new
-                        {
-                            ProductId = 3,
-                            Name = "Keyboard",
-                            Price = 1500m
-                        });
                 });
 
             modelBuilder.Entity("orders.domain.Entities.Order", b =>
