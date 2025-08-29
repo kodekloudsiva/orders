@@ -159,6 +159,7 @@ jobs:
             -e DB_USER=$SQL_SA_USER \
             -e DB_PASS=$SQL_PASS \
             -v ${{ github.workspace }}/migration.sql:/app/migration.sql \
+            -v ${{ github.workspace }}/migration.sql:/app/ \
             sql-applier
 
       - name: Log migration status (always runs)
