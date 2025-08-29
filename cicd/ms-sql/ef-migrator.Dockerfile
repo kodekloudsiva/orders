@@ -28,6 +28,7 @@ RUN mkdir -p sql-migration-scripts && \
       --startup-project orders.webapi \
       --context OrderDbContext \
       --idempotent \
-      -o $OUTPUT_SCRIPT && echo "/========================================/" && 
-      ls -lrta
+      -o $OUTPUT_SCRIPT
+
+RUN echo "/========================================/" && ls -lrta
 
