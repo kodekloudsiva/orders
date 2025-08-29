@@ -78,6 +78,7 @@ jobs:
           MIGRATIONS=$(dotnet ef migrations list \
             --project orders.database \
             --startup-project orders.webapi \
+            --configuration Release \
             --context OrderDbContext --no-build --no-connect || true)
 
           echo "MIGRATIONS FOUND:"
