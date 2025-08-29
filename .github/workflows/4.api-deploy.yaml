@@ -9,7 +9,7 @@ on:
 
 jobs:
   code-deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ contains(['main', 'master'], github.event.workflow_run.head_branch) && github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     env:
       SSH_DIRECTORY: /home/runner/.ssh
