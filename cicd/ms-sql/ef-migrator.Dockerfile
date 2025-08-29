@@ -19,9 +19,7 @@ RUN dotnet build --no-restore
 ARG FROM_MIGRATION=0
 ARG TO_MIGRATION=0
 
-RUN mkdir -p /out && \
-    pwd && echo "pwd =======================" && \
-    ls -lrta && echo "ls -lrta ======================="
+RUN mkdir -p /out 
 
 RUN dotnet ef migrations script $FROM_MIGRATION $TO_MIGRATION \
       --project orders.database \
@@ -34,5 +32,5 @@ RUN dotnet ef migrations script $FROM_MIGRATION $TO_MIGRATION \
 FROM scratch AS export-stage
 COPY --from=builder /out/migration.sql .
 
-RUN echo "/========================================/" && ls -lrta
+RUN ls -lrta
 
