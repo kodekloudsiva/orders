@@ -66,6 +66,8 @@ jobs:
             echo "==================Above is output of ls -lrta ./orders.webapi/bin/Release============================================================"
             ls -lrta ./orders.webapi/bin/Release/net8.0
             echo "==================Above is output of ls -lrta ./orders.webapi/bin/Release/net8.0============================================================"
+            ls -lrta ./orders.database/Migrations
+            echo "==================Above is output of ls -lrta ./orders.database/Migrations============================================================"
 
       - name: Get migrations
         id: migrations
