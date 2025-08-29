@@ -61,10 +61,10 @@ jobs:
             echo "==================Above is output of ls -lrta ./orders.webapi/obj============================================================"
             ls -lrta ./orders.webapi/bin
             echo "==================Above is output of ls -lrta ./orders.webapi/bin============================================================"
-            ls -lrta ./orders.webapi/bin/Debug
-            echo "==================Above is output of ls -lrta ./orders.webapi/bin/Debug============================================================"
-            ls -lrta ./orders.webapi/bin/Debug/net8.0
-            echo "==================Above is output of ls -lrta ./orders.webapi/bin/Debug/net8.0============================================================"
+            ls -lrta ./orders.webapi/bin/Release
+            echo "==================Above is output of ls -lrta ./orders.webapi/bin/Release============================================================"
+            ls -lrta ./orders.webapi/bin/Release/net8.0
+            echo "==================Above is output of ls -lrta ./orders.webapi/bin/Release/net8.0============================================================"
 
 
       - name: Get migrations
