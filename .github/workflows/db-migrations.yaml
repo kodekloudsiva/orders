@@ -87,7 +87,11 @@ jobs:
       - name: List project folders
         run: | 
             pwd
+            echo "============================================================"
             ls -lrta
+            echo "============================================================"
+            ls -lrta ./orders.webapi
+            echo "============================================================"
             ls -R ./orders.webapi/obj
 
       - name: Build EF Migrator Docker Image
