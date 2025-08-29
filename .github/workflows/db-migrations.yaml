@@ -122,7 +122,8 @@ jobs:
           ls -lrta
           docker build --no-cache -f $CICD_SQL/ef-migrator.Dockerfile \
             --build-arg FROM_MIGRATION=$FROM_MIGRATION \
-            --build-arg TO_MIGRATION=$TO_MIGRATION \            
+            --build-arg TO_MIGRATION=$TO_MIGRATION \
+            --build-arg OUTPUT_SCRIPT=sql-scripts/migration.sql \
             -t ef-migrator .        
 
       - name: Extract SQL script from EF Migrator container
