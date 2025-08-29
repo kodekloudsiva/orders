@@ -2,10 +2,10 @@ name: Build & Push API Docker Image
 
 on:
   workflow_run:
-    workflows: ["Generate & Apply DB Migrations"]   # <== Name of build.yaml workflow
+    workflows: ["Generate & Apply DB Migrations"]  # Must match Workflow 1 name
     types:
       - completed
-  workflow_dispatch:   # Optional: allow manual trigger
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -16,7 +16,8 @@ env:
 
 jobs:
   code-build-and-push-dockerimage:
-    if: ${{ (github.event.workflow_run.head_branch == 'main' || github.event.workflow_run.head_branch == 'master') && github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' &&
+           (github.event.workflow_run.pull_requests[0].base.ref == 'main' || github.event.workflow_run.pull_requests[0].base.ref == 'master') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code

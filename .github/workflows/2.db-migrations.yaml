@@ -2,7 +2,7 @@ name: Generate & Apply DB Migrations
 
 on:
   workflow_run:
-    workflows: ["Unit Test & Code Coverage"]   # <== Name of build.yaml workflow
+    workflows: ["Unit Test & Code Coverage"]  # Must match Workflow 1 name
     types:
       - completed
   workflow_dispatch:
@@ -15,7 +15,8 @@ env:
 
 jobs:
   db-generate-and-apply-migrations:
-    if: ${{ (github.event.workflow_run.head_branch == 'main' || github.event.workflow_run.head_branch == 'master') && github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' &&
+           (github.event.workflow_run.pull_requests[0].base.ref == 'main' || github.event.workflow_run.pull_requests[0].base.ref == 'master') }}
     runs-on: ubuntu-latest
     outputs:
       HAS_MIGRATIONS: ${{ steps.migrations.outputs.HAS_MIGRATIONS }}
