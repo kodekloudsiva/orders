@@ -49,6 +49,24 @@ jobs:
       - name: Build solution
         run: dotnet build ./orders.service.sln --configuration Release --no-restore
 
+      - name: List project folders
+        run: | 
+            pwd
+            echo "==================Above is output of pwd command============================================================"
+            ls -lrta
+            echo "==================Above is output of ls -lrta============================================================"
+            ls -lrta ./orders.webapi
+            echo "==================Above is output of ls -lrta ./orders.webapi============================================================"
+            ls -lrta ./orders.webapi/obj
+            echo "==================Above is output of ls -lrta ./orders.webapi/obj============================================================"
+            ls -lrta ./orders.webapi/bin
+            echo "==================Above is output of ls -lrta ./orders.webapi/bin============================================================"
+            ls -lrta ./orders.webapi/bin/Debug
+            echo "==================Above is output of ls -lrta ./orders.webapi/bin/Debug============================================================"
+            ls -lrta ./orders.webapi/bin/Debug/net8.0
+            echo "==================Above is output of ls -lrta ./orders.webapi/bin/Debug/net8.0============================================================"
+
+
       - name: Get migrations
         env: 
           ConnectionStrings__DefaultConnection: "Server=DummyServer;Database=DummyDb;User Id=sa;Password=DummyPassword;"
@@ -90,18 +108,7 @@ jobs:
           echo "FROM_MIGRATION=${{ steps.migrations.outputs.PREVIOUS_MIGRATION || '0' }}" >> $GITHUB_ENV
           echo "TO_MIGRATION=${{ steps.migrations.outputs.LAST_MIGRATION }}" >> $GITHUB_ENV
           echo "OUTPUT_SCRIPT=cicd/scripts/migration.sql" >> $GITHUB_ENV          
-
-      - name: List project folders
-        run: | 
-            pwd
-            echo "==================Above is output of pwd command============================================================"
-            ls -lrta
-            echo "==================Above is output of ls -lrta============================================================"
-            ls -lrta ./orders.webapi
-            echo "==================Above is output of ls -lrta ./orders.webapi============================================================"
-            ls -lrta ./orders.webapi/obj
-            echo "==================Above is output of ls -lrta ./orders.webapi/obj============================================================"
-
+      
       - name: Build EF Migrator Docker Image
         if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
         working-directory: ./
