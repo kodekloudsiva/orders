@@ -21,9 +21,11 @@ ARG TO_MIGRATION=0
 ARG OUTPUT_SCRIPT=sql-scripts/migration.sql
 
 RUN mkdir -p sql-scripts && \
+    pwd && echo "pwd ======================="\
+    ls -lrta && echo "ls -lrta ======================="\
     dotnet ef migrations script $FROM_MIGRATION $TO_MIGRATION \
-      --project ./orders.database \
-      --startup-project ./orders.webapi \
+      --project orders.database \
+      --startup-project orders.webapi \
       --context OrderDbContext \
       --idempotent \
       -o $OUTPUT_SCRIPT

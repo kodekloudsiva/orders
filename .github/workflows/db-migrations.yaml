@@ -22,8 +22,8 @@ jobs:
     env:
       CICD_SQL: cicd/ms-sql/
       CICD_SCRIPTS: cicd/scripts/
-      ORDERS_WEBAPI_PROJECT_PATH: 'orders/orders.webapi'
-      ORDERS_DATABASE_PROJECT_PATH: orders/orders.database
+      ORDERS_WEBAPI_PROJECT_PATH: 'orders.webapi'
+      ORDERS_DATABASE_PROJECT_PATH: orders.database
       SQL_HOST: ${{ vars.TARGET_DEPLOY_SERVER }}
       SQL_PORT: 1433
       SQL_DB: OrdersDb
@@ -43,6 +43,30 @@ jobs:
       - name: Add .NET tools to PATH
         run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
+      - name: Restore dependencies
+        run: dotnet restore ./orders.service.sln
+
+      - name: Build solution
+        run: dotnet build ./orders.service.sln --configuration Release --no-restore
+
+      - name: List project folders
+        run: | 
+            pwd
+            echo "==================Above is output of pwd command============================================================"
+            ls -lrta
+            echo "==================Above is output of ls -lrta============================================================"
+            ls -lrta ./orders.webapi
+            echo "==================Above is output of ls -lrta ./orders.webapi============================================================"
+            ls -lrta ./orders.webapi/obj
+            echo "==================Above is output of ls -lrta ./orders.webapi/obj============================================================"
+            ls -lrta ./orders.webapi/bin
+            echo "==================Above is output of ls -lrta ./orders.webapi/bin============================================================"
+            ls -lrta ./orders.webapi/bin/Release
+            echo "==================Above is output of ls -lrta ./orders.webapi/bin/Release============================================================"
+            ls -lrta ./orders.webapi/bin/Release/net8.0
+            echo "==================Above is output of ls -lrta ./orders.webapi/bin/Release/net8.0============================================================"
+
+
       - name: Get migrations
         env: 
           ConnectionStrings__DefaultConnection: "Server=DummyServer;Database=DummyDb;User Id=sa;Password=DummyPassword;"
@@ -52,8 +76,9 @@ jobs:
 
           # Get the list of migrations
           MIGRATIONS=$(dotnet ef migrations list \
-            --project orders/orders.database \
-            --startup-project orders/orders.webapi \
+            --project orders.database \
+            --startup-project orders.webapi \
+            --configuration Release \
             --context OrderDbContext --no-build --no-connect || true)
 
           echo "MIGRATIONS FOUND:"
@@ -61,6 +86,7 @@ jobs:
 
           # Trim whitespace
           MIGRATIONS=$(echo "$MIGRATIONS" | xargs)
+          echo "pRINTING aLL mIGRATIONS: "$MIGRATIONS
 
           # Check if there are migrations
           if [[ -z "$MIGRATIONS" || "$MIGRATIONS" == "No migrations were found." ]]; then
@@ -82,16 +108,19 @@ jobs:
         run: |
           echo "FROM_MIGRATION=${{ steps.migrations.outputs.PREVIOUS_MIGRATION || '0' }}" >> $GITHUB_ENV
           echo "TO_MIGRATION=${{ steps.migrations.outputs.LAST_MIGRATION }}" >> $GITHUB_ENV
-          echo "OUTPUT_SCRIPT=cicd/scripts/migration.sql" >> $GITHUB_ENV
-
+          echo "OUTPUT_SCRIPT=cicd/scripts/migration.sql" >> $GITHUB_ENV          
+      
       - name: Build EF Migrator Docker Image
         if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
+        working-directory: ./
         run: |
+          echo "fROM mIGRATION pRINTING: "$FROM_MIGRATION
+          echo "tO mIGRATION pRINTING: "$TO_MIGRATION
           docker build --no-cache -f $CICD_SQL/ef-migrator.Dockerfile \
             --build-arg FROM_MIGRATION=$FROM_MIGRATION \
             --build-arg TO_MIGRATION=$TO_MIGRATION \
             --build-arg OUTPUT_SCRIPT=$CICD_SCRIPTS/migration.sql \
-            -t ef-migrator .
+            -t ef-migrator .        
 
       - name: Extract SQL script from EF Migrator container
         if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
