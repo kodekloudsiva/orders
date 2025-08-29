@@ -35,20 +35,20 @@ namespace orders.infrastructure.Data
                 });
 
 
-                //modelBuilder.SeedProducts();
+                modelBuilder.SeedProducts();
             });
         }
     }
 
-    //public static class Seeder
-    //{
-    //    public static void SeedProducts(this ModelBuilder modelBuilder)
-    //    {
-    //        modelBuilder.Entity<Product>().HasData(
-    //                new Product { ProductId = 1, Name = "Laptop", Price = 75000 },
-    //                new Product { ProductId = 2, Name = "Headphones", Price = 2000 },
-    //                new Product { ProductId = 3, Name = "Keyboard", Price = 1500 }
-    //            );
-    //    }
-    //}
+    public static class Seeder
+    {
+        public static void SeedProducts(this ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Product>().HasData(
+                    new Product { ProductId = 1, Name = "Laptop", Price = 75000 },
+                    new Product { ProductId = 2, Name = "Headphones", Price = 2000 },
+                    new Product { ProductId = 3, Name = "Keyboard", Price = 1500 }
+                );
+        }
+    }
 }
