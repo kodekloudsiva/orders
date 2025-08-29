@@ -22,7 +22,8 @@ ARG TO_MIGRATION=0
 RUN mkdir -p /out && \
     pwd && echo "pwd ======================="\
     ls -lrta && echo "ls -lrta ======================="\
-    dotnet ef migrations script $FROM_MIGRATION $TO_MIGRATION \
+
+RUN dotnet ef migrations script $FROM_MIGRATION $TO_MIGRATION \
       --project orders.database \
       --startup-project orders.webapi \
       --context OrderDbContext \
