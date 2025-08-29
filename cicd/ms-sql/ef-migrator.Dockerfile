@@ -20,8 +20,8 @@ ARG FROM_MIGRATION=0
 ARG TO_MIGRATION=0
 
 RUN mkdir -p /out && \
-    pwd && echo "pwd ======================="\
-    ls -lrta && echo "ls -lrta ======================="\
+    pwd && echo "pwd =======================" && \
+    ls -lrta && echo "ls -lrta ======================="
 
 RUN dotnet ef migrations script $FROM_MIGRATION $TO_MIGRATION \
       --project orders.database \
