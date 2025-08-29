@@ -28,7 +28,7 @@ jobs:
       SQL_PORT: 1433
       SQL_DB: OrdersDb
       SQL_SA_USER: SA
-      SQL_PASS: ${{ secrets.DB_PASSWORD }}
+      SQL_PASS: ${{ secrets.SA_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
