@@ -155,14 +155,24 @@ jobs:
           ls -lrta ${{ github.workspace }}
           file ${{ github.workspace }}/sql-migration-scripts/migration.sql || echo "migration.sql not found"
 
+
+      - name: Debug Docker inputs
+        run: |
+          echo "SQL_HOST=${SQL_HOST}"
+          echo "SQL_PORT=${SQL_PORT}"
+          echo "SQL_DB=${SQL_DB}"
+          echo "SQL_SA_USER=${SQL_SA_USER}"
+          echo "SQL_PASS=${SQL_PASS}"
+          ls -l ${{ github.workspace }}/sql-migration-scripts/migration.sql
+
       - name: Run SQL Applier to apply migration
         if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
         run: |
           docker run --rm \
-            -e DB_HOST=\"${SQL_HOST},${SQL_PORT}\" \
+            -e DB_HOST="${SQL_HOST},${SQL_PORT}" \
             -e DB_NAME=$SQL_DB \
             -e DB_USER=$SQL_SA_USER \
-            -e DB_PASS="${SQL_PASS}" \            
+            -e DB_PASS="${SQL_PASS}" \
             -v ${{ github.workspace }}/sql-migration-scripts/migration.sql:/app/migration.sql \
             sql-applier
 
