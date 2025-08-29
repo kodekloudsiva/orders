@@ -83,12 +83,12 @@ jobs:
           echo "MIGRATIONS FOUND:"
           echo "$MIGRATIONS"
 
-          MIGRATIONS=$(echo "$MIGRATIONS" | xargs)
+          MIGRATIONS=$(echo "$MIGRATIONS")
           if [[ -z "$MIGRATIONS" || "$MIGRATIONS" == "No migrations were found." ]]; then
             echo "HAS_MIGRATIONS=false" >> $GITHUB_OUTPUT
           else
-            LAST_MIGRATION=$(echo "$MIGRATIONS" | tail -1)
-            PREVIOUS_MIGRATION=$(echo "$MIGRATIONS" | tail -2 | head -1)
+            LAST_MIGRATION=$(echo "$MIGRATIONS" | tail -n 1)
+            PREVIOUS_MIGRATION=$(echo "$MIGRATIONS" | tail -n 2 | head -n 1)
 
             echo "HAS_MIGRATIONS=true" >> $GITHUB_OUTPUT
             echo "LAST_MIGRATION=$LAST_MIGRATION" >> $GITHUB_OUTPUT
