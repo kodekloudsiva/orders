@@ -21,6 +21,9 @@ ARG TO_MIGRATION=0
 
 RUN mkdir -p /out 
 
+RUN echo "testin From Migration: "$FROM_MIGRATION
+RUN echo "testin To Migration: "$TO_MIGRATION
+
 RUN dotnet ef migrations script $FROM_MIGRATION $TO_MIGRATION \
       --project orders.database \
       --startup-project orders.webapi \
