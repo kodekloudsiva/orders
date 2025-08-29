@@ -79,7 +79,9 @@ jobs:
             --project orders.database \
             --startup-project orders.webapi \
             --configuration Release \
-            --context OrderDbContext --no-build --no-connect || true)
+            --context OrderDbContext \
+            --no-build --no-connect 2>&1 \
+            | grep -E '^[0-9]{14}_.+' || true)
 
           echo "MIGRATIONS FOUND:"
           echo "$MIGRATIONS"
