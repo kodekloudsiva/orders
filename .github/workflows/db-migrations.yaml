@@ -159,7 +159,7 @@ jobs:
         if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
         run: |
           docker run --rm \
-            -e DB_HOST="${SQL_HOST},${SQL_PORT}" \
+            -e DB_HOST=\"${SQL_HOST},${SQL_PORT}\" \
             -e DB_NAME=$SQL_DB \
             -e DB_USER=$SQL_SA_USER \
             -e DB_PASS=$SQL_PASS \            
