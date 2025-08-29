@@ -87,12 +87,13 @@ jobs:
       - name: List project folders
         run: | 
             pwd
-            echo "============================================================"
+            echo "==================Above is output of pwd command============================================================"
             ls -lrta
-            echo "============================================================"
+            echo "==================Above is output of ls -lrta============================================================"
             ls -lrta ./orders.webapi
-            echo "============================================================"
-            ls -R ./orders.webapi/obj
+            echo "==================Above is output of ls -lrta ./orders.webapi============================================================"
+            ls -lrta ./orders.webapi/obj
+            echo "==================Above is output of ls -lrta ./orders.webapi/obj============================================================"
 
       - name: Build EF Migrator Docker Image
         if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
