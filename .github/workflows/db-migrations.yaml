@@ -66,15 +66,12 @@ jobs:
             ls -lrta ./orders.webapi/bin/Release/net8.0
             echo "==================Above is output of ls -lrta ./orders.webapi/bin/Release/net8.0============================================================"
 
-
       - name: Get migrations
+        id: migrations
         env: 
           ConnectionStrings__DefaultConnection: "Server=DummyServer;Database=DummyDb;User Id=sa;Password=DummyPassword;"
-        id: migrations
         run: |
           echo "📋 Checking EF Core migrations..."
-
-          # Get the list of migrations
           MIGRATIONS=$(dotnet ef migrations list \
             --project orders.database \
             --startup-project orders.webapi \
@@ -86,11 +83,7 @@ jobs:
           echo "MIGRATIONS FOUND:"
           echo "$MIGRATIONS"
 
-          # Trim whitespace
           MIGRATIONS=$(echo "$MIGRATIONS" | xargs)
-          echo "pRINTING aLL mIGRATIONS: "$MIGRATIONS
-
-          # Check if there are migrations
           if [[ -z "$MIGRATIONS" || "$MIGRATIONS" == "No migrations were found." ]]; then
             echo "HAS_MIGRATIONS=false" >> $GITHUB_OUTPUT
           else
@@ -100,16 +93,21 @@ jobs:
             echo "HAS_MIGRATIONS=true" >> $GITHUB_OUTPUT
             echo "LAST_MIGRATION=$LAST_MIGRATION" >> $GITHUB_OUTPUT
             echo "PREVIOUS_MIGRATION=$PREVIOUS_MIGRATION" >> $GITHUB_OUTPUT
-
-            echo "LAST_MIGRATION=$LAST_MIGRATION"
-            echo "PREVIOUS_MIGRATION=$PREVIOUS_MIGRATION"
           fi
 
       - name: Set migration args
         if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
         run: |
-          echo "FROM_MIGRATION=${{ steps.migrations.outputs.PREVIOUS_MIGRATION || '0' }}" >> $GITHUB_ENV
-          echo "TO_MIGRATION=${{ steps.migrations.outputs.LAST_MIGRATION }}" >> $GITHUB_ENV
+          if [[ "${{ steps.migrations.outputs.PREVIOUS_MIGRATION }}" == "${{ steps.migrations.outputs.LAST_MIGRATION }}" ]]; then
+            # First run → generate from 0
+            echo "FROM_MIGRATION=0" >> $GITHUB_ENV
+            echo "TO_MIGRATION=${{ steps.migrations.outputs.LAST_MIGRATION }}" >> $GITHUB_ENV
+          else
+            # Subsequent runs → generate only the delta
+            echo "FROM_MIGRATION=${{ steps.migrations.outputs.PREVIOUS_MIGRATION }}" >> $GITHUB_ENV
+            echo "TO_MIGRATION=${{ steps.migrations.outputs.LAST_MIGRATION }}" >> $GITHUB_ENV
+          fi
+      
       
       - name: Build EF Migrator Docker Image
         if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
