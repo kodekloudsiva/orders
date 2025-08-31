@@ -9,7 +9,7 @@ on:
       - main
       - master
   workflow_dispatch: {}
-  
+
 
 env:
   # Workflow-wide defaults
@@ -159,7 +159,6 @@ jobs:
             --configuration Release \
             --context OrderDbContext \
             --output "migrations/migration.sql" \
-            --force
 
       - uses: actions/upload-artifact@v4
         if: steps.migrations.outputs.has_migrations == 'true'
