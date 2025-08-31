@@ -157,7 +157,7 @@ jobs:
             --startup-project orders.webapi \
             --configuration Release \
             --context OrderDbContext \
-            -o migrations/migration.sql
+            --output "migrations/migration.sql" \
             --force
 
       - uses: actions/upload-artifact@v4
