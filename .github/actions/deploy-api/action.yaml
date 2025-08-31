@@ -1,0 +1,75 @@
+﻿name: "Deploy .NET API via SSH + Docker"
+description: "Deploys the API to a remote server using SSH and Docker Compose"
+inputs:
+  remote_host:
+    required: true
+    description: "Remote server host"
+  remote_user:
+    required: true
+    description: "Remote SSH user"
+  remote_app_dir:
+    required: true
+    description: "Remote app directory path"
+  ssh_private_key:
+    required: true
+    description: "SSH private key for connecting to the remote server"
+  sa_password:
+    required: true
+    description: "SQL Server SA password"
+  api_compose_file:
+    required: true
+    description: "Docker Compose file for API deployment"
+  api_compose_file_withpath:
+    required: true
+    description: "Docker Compose file for API deployment"
+  ghcr_pat:
+    required: true
+    description: "GitHub Container Registry PAT"
+  image_tag:
+    required: true
+    description: "The image tag built in previous job"
+
+runs:
+  using: "composite"
+  steps:
+    - name: 🔐 Set up SSH key & known_hosts
+      shell: bash
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ inputs.ssh_private_key }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H "${{ inputs.remote_host }}" >> ~/.ssh/known_hosts
+
+    - name: 📤 Copy deployment files to remote server
+      shell: bash
+      run: |
+        ssh -i ~/.ssh/id_rsa ${{ inputs.remote_user }}@${{ inputs.remote_host }} "mkdir -p ${{ inputs.remote_app_dir }}"
+        scp -i ~/.ssh/id_rsa ${{ inputs.api_compose_file_withpath }} \
+            cicd/install-docker.sh \
+            ${{ inputs.remote_user }}@${{ inputs.remote_host }}:${{ inputs.remote_app_dir }}/
+
+    - name: 🐳 Ensure Docker is installed on remote
+      shell: bash
+      run: ssh -i ~/.ssh/id_rsa ${{ inputs.remote_user }}@${{ inputs.remote_host }} "bash ${{ inputs.remote_app_dir }}/install-docker.sh"
+
+    - name: 🚀 Deploy application
+      shell: bash
+      run: |
+        ssh -i ~/.ssh/id_rsa ${{ inputs.remote_user }}@${{ inputs.remote_host }} << EOF
+          set -e
+          echo "🔐 Logging into GHCR..."
+          echo "${{ inputs.ghcr_pat }}" | sudo docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+          cd ${{ inputs.remote_app_dir }}
+          echo "📝 Writing environment variables to .env file..."
+          echo "DOTNET_IMAGE_TAG=${{ inputs.image_tag }}" > .env
+          echo "SA_PASSWORD=${{ inputs.sa_password }}" >> .env
+
+          echo "📥 Pulling image: ${{ inputs.image_tag }}"
+          sudo docker compose --env-file .env -f ${{ inputs.api_compose_file }} pull
+
+          echo "🧱 Starting containers..."
+          sudo docker compose --env-file .env -f ${{ inputs.api_compose_file }} up -d
+
+          echo "✅ Deployment complete."
+        EOF

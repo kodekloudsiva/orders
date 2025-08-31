@@ -11,6 +11,19 @@ on:
       - master
   workflow_dispatch:
 
+env:
+  # Workflow-wide defaults
+  CICD_SQL: 'cicd/sql'
+  CICD_API: 'cicd/api'
+  API_COMPOSE_FILE: 'docker-compose-api.yaml'
+  API_COMPOSE_FILE_WITHPATH: 'cicd/api/docker-compose-api.yaml'
+  REMOTE_USER: 'ubuntu'
+  REMOTE_APP_DIR: '/app'
+  SQL_PORT: '1433'
+  SQL_USER: 'sa'
+  SQL_DB: 'OrdersDb'
+
+
 jobs:
   # ---------------------------------
   # 1. Unit Tests + Coverage
@@ -18,51 +31,51 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-      - run: dotnet restore
-      - run: sudo apt-get update && sudo apt-get install -y bc libxml2-utils
+        - uses: actions/checkout@v4
+        - uses: actions/setup-dotnet@v3
+          with:
+             dotnet-version: '8.0.x'
+        - run: dotnet restore
+        - run: sudo apt-get update && sudo apt-get install -y bc libxml2-utils
 
-      - name: Run unit tests with coverage
-        run: |
-          dotnet test ./orders.test/orders.test.csproj \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./TestResults \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Include="[orders.domain]*,[orders.application]*"
+        - name: Run unit tests with coverage
+          run: |
+                dotnet test ./orders.test/orders.test.csproj \
+                --collect:"XPlat Code Coverage" \
+                --results-directory ./TestResults \
+                -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura \
+                -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Include="[orders.domain]*,[orders.application]*"
 
-      - name: Install ReportGenerator
-        run: |
-          dotnet tool install --global dotnet-reportgenerator-globaltool
-          echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
+        - name: Install ReportGenerator
+          run: |
+            dotnet tool install --global dotnet-reportgenerator-globaltool
+            echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
 
-      - name: Generate coverage report
-        run: |
-          reportgenerator -reports:./TestResults/**/coverage.cobertura.xml \
+        - name: Generate coverage report
+          run: |
+            reportgenerator -reports:./TestResults/**/coverage.cobertura.xml \
             -targetdir:CoverageReport \
             "-reporttypes:Html;TextSummary;HtmlSummary;Cobertura;XmlSummary"
 
-      - name: Validate 65% code coverage threshold
-        run: |
-          COVERAGE_FILE=$(find CoverageReport -name 'Summary.xml')
-          COVERAGE_PERCENT=$(xmllint --xpath "string(//Summary/Linecoverage)" "$COVERAGE_FILE")
-          echo "✅ Code coverage: $COVERAGE_PERCENT%"
-          if echo "$COVERAGE_PERCENT < 65" | bc -l | grep -q 1; then
+        - name: Validate 65% code coverage threshold
+          run: |
+            COVERAGE_FILE=$(find CoverageReport -name 'Summary.xml')
+            COVERAGE_PERCENT=$(xmllint --xpath "string(//Summary/Linecoverage)" "$COVERAGE_FILE")
+            echo "✅ Code coverage: $COVERAGE_PERCENT%"
+            if echo "$COVERAGE_PERCENT < 65" | bc -l | grep -q 1; then
             echo "❌ Code coverage below threshold!"
             exit 1
-          fi
+            fi
 
-      # ✅ Upload report artifact only on main/master *and only for push*
-      - uses: actions/upload-artifact@v4
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-        with:
-          name: code-coverage-report
-          path: CoverageReport/
+        # ✅ Upload report artifact only on main/master *and only for push*
+        - uses: actions/upload-artifact@v4
+          if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+          with:
+            name: code-coverage-report
+            path: CoverageReport/
 
   # ---------------------------------
-  # 2. DB Migration (push to main/master only)
+  # 2. Generate DB Migrations (push to main/master only)
   # ---------------------------------
   db-generate-migrations:
     needs: unit-tests
@@ -153,61 +166,29 @@ jobs:
           name: db-migration-scripts
           path: migrations/
 
-
+  # ---------------------------------
+  # 3. Apply DB Migrations to staging environment upon approval (push to main/master only)
+  # ---------------------------------
   db-apply-migrations-staging:
     needs: db-generate-migrations
-    environment: staging-db   # 🔒 requires approval
-    runs-on: ubuntu-latest
     if: needs.db-generate-migrations.outputs.has_migrations == 'true'
+    environment: staging   # 🔒 approval gate
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: db-migration-scripts
-          path: sql-migration-scripts/
-
-      - name: Check DB connectivity before applying migration
-        run: |
-          echo "🔌 Testing database connection..."
-          timeout 15 bash -c "</dev/tcp/$SQL_HOST/$SQL_PORT" \
-            && echo "✅ Database is reachable." \
-            || (echo "❌ Database is not reachable." && exit 1)
-
-      - name: Build SQL Applier Docker Image
-        run: |
-          docker build -f $CICD_SQL/sql-applier.Dockerfile . -t sql-applier
-
-      - name: Debug migration sql
-        run: |
-          echo "📂 Workspace files:"
-          ls -lrta ${{ github.workspace }}
-          echo "📄 Checking migration.sql:"
-          file ${{ github.workspace }}/sql-migration-scripts/migration.sql || echo "migration.sql not found"
-
-      - name: Debug Docker inputs
-        run: |
-          echo "SQL_HOST=${SQL_HOST}"
-          echo "SQL_PORT=${SQL_PORT}"
-          echo "SQL_DB=${SQL_DB}"
-          echo "SQL_SA_USER=${SQL_SA_USER}"
-          echo "SQL_PASS=${SQL_PASS}"
-          ls -l ${{ github.workspace }}/sql-migration-scripts/migration.sql
-
-      - name: Run SQL Applier to apply migration
-        run: |
-          docker run --rm \
-            -e DB_HOST="${SQL_HOST},${SQL_PORT}" \
-            -e DB_NAME=$SQL_DB \
-            -e DB_USER=$SQL_SA_USER \
-            -e DB_PASS="${SQL_PASS}" \
-            -v ${{ github.workspace }}/sql-migration-scripts/migration.sql:/app/migration.sql \
-            sql-applier
+        - uses: ./.github/actions/db-apply-migrations
+          with:
+            sql-host: ${{ vars.STAGING_REMOTE_HOST }}
+            sql-port: ${{ env.SQL_PORT }}
+            sql-db: ${{ env.SQL_DB }}
+            sql-user: ${{ env.SQL_USER }}
+            sql-pass: ${{ secrets.SQL_PASS }}
+            cicd-sql: ${{ env.CICD_SQL }}
 
   # ---------------------------------
   # 4. Build & Push (push to main/master only)
   # ---------------------------------
   build-and-push:
-    needs: [unit-tests, db-generate-migrations db-apply-migrations-staging]
-    needs: [db-generate-migrations, db-apply-migrations-staging]
+    needs: [unit-tests, db-generate-migrations, db-apply-migrations-staging]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     env:
@@ -245,7 +226,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:latest
 
   # ---------------------------------
-  # 5. Deploy API (push to main/master only)
+  # 5. Deploy API to staging environment (push to main/master only)
   # ---------------------------------
   deploy-api-staging:
     needs: build-and-push
@@ -255,48 +236,57 @@ jobs:
     - name: ✅ Checkout code
       uses: actions/checkout@v4
 
-    - name: 🔐 Set up SSH key & known_hosts
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
-
-    - name: 📤 Copy deployment files to remote server
-      run: |
-        ssh -i ~/.ssh/id_rsa $REMOTE_USER@$REMOTE_HOST "mkdir -p $DOTNET_API_REMOTE_APP_DIR"
-        scp -i ~/.ssh/id_rsa $CICD_API/$API_COMPOSE_FILE \
-            $CICD_SCRIPTS/install-docker.sh \
-            $REMOTE_USER@$REMOTE_HOST:$DOTNET_API_REMOTE_APP_DIR/
-
-    - name: 🐳 Ensure Docker is installed on remote
-      run: ssh -i ~/.ssh/id_rsa $REMOTE_USER@$REMOTE_HOST "bash $DOTNET_API_REMOTE_APP_DIR/install-docker.sh"
-
-    - name: 🚀 Deploy application
-      run: |
-        IMAGE="${{ needs.build-and-push.outputs.image-tag }}"
-        ssh -i ~/.ssh/id_rsa $REMOTE_USER@$REMOTE_HOST << EOF
-          set -e
-          echo "🔐 Logging into GHCR..."
-          echo "${{ secrets.GHCR_PAT }}" | sudo docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-          
-          cd $DOTNET_API_REMOTE_APP_DIR
-          echo "📝 Writing environment variables to .env file..."
-          echo "DOTNET_IMAGE_TAG=$IMAGE" > .env
-          echo "SA_PASSWORD=${{ secrets.SA_PASSWORD }}" >> .env
-          
-          echo "📥 Pulling image: $IMAGE"
-          sudo docker compose --env-file .env -f $API_COMPOSE_FILE pull
-          
-          echo "🧱 Starting containers..."
-          sudo docker compose --env-file .env -f $API_COMPOSE_FILE up -d
-          
-          echo "✅ Deployment complete."
-        EOF
-
-  db-apply-migrations-prod:
+    - name: 🚀 Deploy to Staging
+      uses: ./.github/actions/deploy-api
+      with:
+        remote_host: ${{ vars.STAGING_REMOTE_HOST }}
+        remote_user: ${{ env.REMOTE_USER }}
+        remote_app_dir: ${{ env.REMOTE_APP_DIR }}
+        ssh_private_key: ${{ secrets.STAGING_REMOTE_HOST_SSH_PRIVATE_KEY }}
+        sa_password: ${{ secrets.SA_PASSWORD }}
+        api_compose_file: ${{ env.API_COMPOSE_FILE }}
+        api_compose_file_withpath: ${{ env.API_COMPOSE_FILE_WITHPATH }}
+        ghcr_pat: ${{ secrets.GHCR_PAT }}
+        image_tag: ${{ needs.build-and-push.outputs.image_tag }}
+  
+  # ---------------------------------
+  # 6. Apply DB Migrations to production environment upon approval (push to main/master only)
+  # ---------------------------------
+  db-apply-migrations-production:
+    needs: deploy-api-staging
     if: needs.db-generate-migrations.outputs.has_migrations == 'true'
-    needs: deploy-staging
+    environment: production   # 🔒 approval gate
     runs-on: ubuntu-latest
-    environment: production-db   # 🔒 requires approval
     steps:
+    - uses: ./.github/actions/db-apply-migrations
+      with:
+        sql-host: ${{ vars.PROD_REMOTE_HOST }}
+        sql-port: ${{ env.SQL_PORT }}
+        sql-db: ${{ env.SQL_DB }}
+        sql-user: ${{ env.SQL_USER }}
+        sql-pass: ${{ secrets.SQL_PASS }}
+        cicd-sql: ${{ env.CICD_SQL }}
+
+  # ---------------------------------
+  # 7. Deploy API to production environment upon approval (push to main/master only)
+  # ---------------------------------
+  deploy-api-prod:
+    needs: [deploy-api-staging, db-apply-migrations-production]
+    runs-on: ubuntu-latest
+    environment: production   # 🔒 requires manual approval
+    steps:
+    - name: ✅ Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🚀 Deploy to Production
+      uses: ./.github/actions/deploy-api
+      with:
+        remote_host: ${{ vars.PROD_REMOTE_HOST }}
+        remote_user: ${{ env.REMOTE_USER }}
+        remote_app_dir: ${{ env.REMOTE_APP_DIR }}
+        ssh_private_key: ${{ secrets.PROD_REMOTE_HOST_SSH_PRIVATE_KEY }}
+        sa_password: ${{ secrets.SA_PASSWORD }}
+        api_compose_file: ${{ env.API_COMPOSE_FILE }}
+        api_compose_file_withpath: ${{ env.API_COMPOSE_FILE_WITHPATH }}        
+        ghcr_pat: ${{ secrets.GHCR_PAT }}
+        image_tag: ${{ needs.build-and-push.outputs.image_tag }}
