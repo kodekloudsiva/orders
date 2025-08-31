@@ -253,7 +253,7 @@ jobs:
   # 6. Apply DB Migrations to production environment upon approval (push to main/master only)
   # ---------------------------------
   db-apply-migrations-production:
-    needs: [ db-generate-migrations, db-apply-migrations-staging ]
+    needs: deploy-api-staging
     if: needs.db-generate-migrations.outputs.has_migrations == 'true'
     environment: production   # 🔒 approval gate
     runs-on: ubuntu-latest
@@ -271,7 +271,7 @@ jobs:
   # 7. Deploy API to production environment upon approval (push to main/master only)
   # ---------------------------------
   deploy-api-prod:
-    needs: [build-and-push, db-apply-migrations-production]
+    needs: [deploy-api-staging, db-apply-migrations-production]
     runs-on: ubuntu-latest
     environment: production   # 🔒 requires manual approval
     steps:
