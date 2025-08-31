@@ -30,7 +30,7 @@ jobs:
       - name: 🔐 Set up SSH key
         run: |
           mkdir -p $SSH_DIRECTORY
-          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > $SSH_KEY_PATH
+          echo "${{ secrets.STAGING_REMOTE_HOST_SSH_PRIVATE_KEY }}" > $SSH_KEY_PATH
           chmod 600 $SSH_KEY_PATH
 
       - name: 📡 Add remote host to known_hosts
