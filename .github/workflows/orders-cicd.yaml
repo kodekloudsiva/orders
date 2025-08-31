@@ -2,14 +2,13 @@ name: Orders CI/CD Pipeline
 
 on:
   push:
-    branches-ignore:
-      - main
-      - master
+    branches:
+      - '**'     # Run on all branches (feature, hotfix, main, etc.)
   pull_request:
     branches:
       - main
       - master
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 env:
   # Workflow-wide defaults
