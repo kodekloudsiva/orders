@@ -2,12 +2,14 @@ name: Orders CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - '**'   # Run on all branches for push events
+    branches-ignore:
+      - main
+      - master
   pull_request:
     branches:
       - main
-      - master   # Run only on PRs targeting main/master
+      - master
+  workflow_dispatch:
 
 jobs:
   # ---------------------------------
@@ -67,7 +69,7 @@ jobs:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     outputs:
-      HAS_MIGRATIONS: ${{ steps.migrations.outputs.HAS_MIGRATIONS }}
+      has_migrations: ${{ steps.migrations.outputs.has_migrations }}
     steps:
       - uses: actions/checkout@v4
 
@@ -107,12 +109,12 @@ jobs:
           echo "$MIGRATIONS"
 
           if [[ -z "$MIGRATIONS" || "$MIGRATIONS" == "No migrations were found." ]]; then
-            echo "HAS_MIGRATIONS=false" >> $GITHUB_OUTPUT
+            echo "has_migrations=false" >> $GITHUB_OUTPUT
           else
             LAST_MIGRATION=$(echo "$MIGRATIONS" | tail -n 1)
             PREVIOUS_MIGRATION=$(echo "$MIGRATIONS" | tail -n 2 | head -n 1)
 
-            echo "HAS_MIGRATIONS=true" >> $GITHUB_OUTPUT
+            echo "has_migrations=true" >> $GITHUB_OUTPUT
             echo "LAST_MIGRATION=$LAST_MIGRATION" >> $GITHUB_OUTPUT
             echo "PREVIOUS_MIGRATION=$PREVIOUS_MIGRATION" >> $GITHUB_OUTPUT
           fi
@@ -121,7 +123,7 @@ jobs:
       # Generate migration SQL (if found)
       # ---------------------------------
       - name: Set migration args
-        if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
+        if: steps.migrations.outputs.has_migrations == 'true'
         run: |
           if [[ "${{ steps.migrations.outputs.PREVIOUS_MIGRATION }}" == "${{ steps.migrations.outputs.LAST_MIGRATION }}" ]]; then
             echo "FROM_MIGRATION=0" >> $GITHUB_ENV
@@ -132,7 +134,7 @@ jobs:
           fi
 
       - name: Generate DB migration scripts
-        if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
+        if: steps.migrations.outputs.has_migrations == 'true'
         run: |
           echo "⚡ Generating SQL script from $FROM_MIGRATION → $TO_MIGRATION"
           mkdir -p migrations
@@ -146,28 +148,17 @@ jobs:
             -o migrations/${TO_MIGRATION}.sql
 
       - uses: actions/upload-artifact@v4
-        if: steps.migrations.outputs.HAS_MIGRATIONS == 'true'
+        if: steps.migrations.outputs.has_migrations == 'true'
         with:
           name: db-migration-scripts
           path: migrations/
 
-  # ---------------------------------
-  # 3. Manual approval + apply migrations
-  # ---------------------------------
-  manual-approval:
-    needs: db-generate-migrations
-    if: github.event_name == 'push' && needs.db-generate-migrations.outputs.HAS_MIGRATIONS == 'true'
-    runs-on: ubuntu-latest
-    environment:
-      name: db-approval   # 👈 requires manual approval in GitHub UI
-    steps:
-      - name: Approval granted
-        run: echo "✅ Team Lead approved migration execution."
 
-  db-apply-migrations:
-    needs: manual-approval
+  db-apply-migrations-staging:
+    needs: db-generate-migrations
+    environment: staging-db   # 🔒 requires approval
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && needs.db-generate-migrations.outputs.HAS_MIGRATIONS == 'true'
+    if: needs.db-generate-migrations.outputs.has_migrations == 'true'
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -215,9 +206,9 @@ jobs:
   # 4. Build & Push (push to main/master only)
   # ---------------------------------
   build-and-push:
-    needs: [db-generate-migrations, db-apply-migrations]
-    # if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    if: always() && (needs.db-generate-migrations.result == 'success' && (needs.db-apply-migrations.result == 'success' || needs.db-apply-migrations.result == 'skipped'))
+    needs: [unit-tests, db-generate-migrations db-apply-migrations-staging]
+    needs: [db-generate-migrations, db-apply-migrations-staging]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     env:
       REGISTRY: ghcr.io
@@ -256,10 +247,10 @@ jobs:
   # ---------------------------------
   # 5. Deploy API (push to main/master only)
   # ---------------------------------
-  deploy-api:
+  deploy-api-staging:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && needs.build-and-push.result == 'success'
+    environment: staging
     steps:
     - name: ✅ Checkout code
       uses: actions/checkout@v4
@@ -302,3 +293,10 @@ jobs:
           
           echo "✅ Deployment complete."
         EOF
+
+  db-apply-migrations-prod:
+    if: needs.db-generate-migrations.outputs.has_migrations == 'true'
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production-db   # 🔒 requires approval
+    steps:
