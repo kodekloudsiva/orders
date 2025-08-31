@@ -17,6 +17,7 @@ namespace orders.test.Domain.tests
             result.Value.TotalPrice.Should().Be(20);
         }
 
+
         [Fact]
         public void CreateOrder_WithEmptyItems_ShouldFail()
         {
