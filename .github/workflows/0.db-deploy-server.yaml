@@ -5,13 +5,13 @@ on:
 
 env:
   REMOTE_USER: ubuntu
-  REMOTE_HOST: ${{ vars.TARGET_DEPLOY_SERVER }}
+  REMOTE_HOST: ${{ vars.STAGING_REMOTE_HOST }}
   SQL_REMOTE_APP_DIR: /home/ubuntu/app/ms-sql
   SSH_DIRECTORY: /home/runner/.ssh
   SSH_KEY_PATH: /home/runner/.ssh/id_rsa
   CICD: cicd/
-  CICD_API: cicd/dotnet-api/
-  CICD_SQL: cicd/ms-sql/
+  CICD_API: cicd/api/
+  CICD_SQL: cicd/sql/
   CICD_SCRIPTS: cicd/scripts/
   SQL_COMPOSE_FILE: docker-compose-sql.yaml
   SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
