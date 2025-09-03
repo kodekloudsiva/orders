@@ -32,7 +32,6 @@ runs:
         name: db-migration-scripts
         path: ${{ inputs.runner-download-migrations }}
 
-        
     - name: Locate migration.sql
       id: find-sql
       shell: bash
@@ -53,17 +52,24 @@ runs:
       shell: bash
       run: |
         echo "Resolved migration.sql path: $MIGRATION_SQL"
-        ls -lh $MIGRATION_SQL
+        ls -lh "$MIGRATION_SQL"
+
+    - name: Preview migration.sql (first 20 lines)
+      shell: bash
+      run: |
+        echo "👀 Previewing first 20 lines of migration.sql:"
+        head -n 20 "$MIGRATION_SQL" || echo "⚠️ Unable to read migration.sql"
 
     - name: Run SQL Applier to apply migration
       shell: bash
       run: |
+        echo "🚀 Running SQL Applier with $MIGRATION_SQL"
         docker run --rm \
           -e DB_HOST="${{ inputs.sql-host }},${{ inputs.sql-port }}" \
           -e DB_NAME=${{ inputs.sql-db }} \
           -e DB_USER=${{ inputs.sql-user }} \
           -e DB_PASS="${{ inputs.sql-pass }}" \
-          -v $MIGRATION_SQL:/app/migration.sql \
-          -v ${{ github.workspace }}/cicd/scripts/migration-entrypoint.sh:/app/migration-entrypoint.sh \
+          -v "${{ env.MIGRATION_SQL }}":/app/migration.sql \
+          -v "${{ github.workspace }}/cicd/scripts/migration-entrypoint.sh":/app/migration-entrypoint.sh \
           mcr.microsoft.com/mssql-tools:latest \
           /bin/bash /app/migration-entrypoint.sh
