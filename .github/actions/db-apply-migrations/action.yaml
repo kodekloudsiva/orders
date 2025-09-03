@@ -54,8 +54,9 @@ runs:
         ls -lrta ${{ github.workspace }}/runner/download
         echo "===================================================="
         ls -lrta ${{ github.workspace }}/runner/download/migrations
-        echo "📄 Checking migration.sql:"
-        file ${{ inputs.runner-download-migrations }}/migration.sql || echo "migration.sql not found"
+        echo "===================================================="
+        echo "Looking for migrations in: ${{ inputs.runner-download-migrations }}"
+        ls -lrta ${{ inputs.runner-download-migrations }}
 
     - name: Debug Docker inputs
       shell: bash
