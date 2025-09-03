@@ -50,6 +50,10 @@ runs:
       run: |
         echo "📂 Workspace files:"
         ls -lrta ${{ github.workspace }}/runner
+        echo "===================================================="
+        ls -lrta ${{ github.workspace }}/runner/download
+        echo "===================================================="
+        ls -lrta ${{ github.workspace }}/runner/download/migrations
         echo "📄 Checking migration.sql:"
         file ${{ inputs.runner-download-migrations }}/migration.sql || echo "migration.sql not found"
 
