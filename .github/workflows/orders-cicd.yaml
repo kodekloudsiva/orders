@@ -18,7 +18,7 @@ env:
   API_COMPOSE_FILE: 'docker-compose-api.yaml'
   API_COMPOSE_FILE_WITHPATH: 'cicd/api/docker-compose-api.yaml'
   REMOTE_USER: 'ubuntu'
-  REMOTE_APP_DIR: '/app'
+  REMOTE_APP_DIR: 'app'
   SQL_PORT: '1433'
   SQL_USER: 'sa'
   SQL_DB: 'OrdersDb'
