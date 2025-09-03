@@ -31,6 +31,18 @@ runs:
       with:
         name: db-migration-scripts
         path: ${{ inputs.runner-download-migrations }}
+    
+
+    - name: test file
+      run | 
+        echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
+        pwd
+        echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
+        echo ${{ inputs.runner-download-migrations }}
+        echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
+        ls -lrta ${{ inputs.runner-download-migrations }}
+        echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
+
 
     - name: Locate migration.sql
       id: find-sql
