@@ -22,6 +22,7 @@ inputs:
     required: true
   runner-download-migrations:
     description: "migration script generated in previous job will be downloaded in this runner machines directory"
+    required: true
 
 runs:
   using: "composite"

@@ -22,7 +22,7 @@ env:
   SQL_PORT: '1433'
   SQL_USER: 'sa'
   SQL_DB: 'OrdersDb'
-  DOWNLOAD_MIGRATATIONS: '/runner/download/migrations'
+  DOWNLOAD_MIGRATIONS: ${{ github.workspace }}/runner/download/migrations
 
 
 jobs:
@@ -189,7 +189,7 @@ jobs:
         - uses: actions/checkout@v4
         - name: 🔐 Set up SSH key
           run: |
-            mkdir -p $DOWNLOAD_MIGRATATIONS
+            mkdir -p $DOWNLOAD_MIGRATIONS
         - uses: ./.github/actions/db-apply-migrations
           with:
             sql-host: ${{ vars.REMOTE_HOST }}
@@ -198,7 +198,7 @@ jobs:
             sql-user: ${{ env.SQL_USER }}
             sql-pass: ${{ secrets.SQL_PASS }}
             cicd-sql: ${{ env.CICD_SQL }}
-            runner-download-migrations: $DOWNLOAD_MIGRATATIONS
+            runner-download-migrations: $DOWNLOAD_MIGRATIONS
 
   # ---------------------------------
   # 4. Build & Push (push to main/master only)
@@ -277,7 +277,7 @@ jobs:
         - uses: actions/checkout@v4
         - name: 🔐 Set up SSH key
           run: |
-            mkdir -p $DOWNLOAD_MIGRATATIONS
+            mkdir -p $DOWNLOAD_MIGRATIONS
         - uses: ./.github/actions/db-apply-migrations
           with:
             sql-host: ${{ vars.REMOTE_HOST }}
@@ -286,7 +286,7 @@ jobs:
             sql-user: ${{ env.SQL_USER }}
             sql-pass: ${{ secrets.SQL_PASS }}
             cicd-sql: ${{ env.CICD_SQL }}
-            runner-download-migrations: $DOWNLOAD_MIGRATATIONS
+            runner-download-migrations: $DOWNLOAD_MIGRATIONS
 
   # ---------------------------------
   # 7. Deploy API to production environment upon approval (push to main/master only)
