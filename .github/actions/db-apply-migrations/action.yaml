@@ -51,7 +51,7 @@ runs:
         echo "📂 Workspace files:"
         ls -lrta ${{ github.workspace }}
         echo "📄 Checking migration.sql:"
-        file ${{ github.workspace }}/${{ inputs.runner-download-migrations }}/migration.sql || echo "migration.sql not found"
+        file ${{ inputs.runner-download-migrations }}/migration.sql || echo "migration.sql not found"
 
     - name: Debug Docker inputs
       shell: bash
@@ -61,7 +61,7 @@ runs:
         echo "SQL_DB=${{ inputs.sql-db }}"
         echo "SQL_USER=${{ inputs.sql-user }}"
         echo "SQL_PASS=${{ inputs.sql-pass }}"
-        ls -l ${{ github.workspace }}/${{ inputs.runner-download-migrations }}/migration.sql
+        ls -l ${{ inputs.runner-download-migrations }}/migration.sql
 
     - name: Run SQL Applier to apply migration
       shell: bash
@@ -71,7 +71,7 @@ runs:
           -e DB_NAME=${{ inputs.sql-db }} \
           -e DB_USER=${{ inputs.sql-user }} \
           -e DB_PASS="${{ inputs.sql-pass }}" \
-          -v ${{ github.workspace }}/${{ inputs.runner-download-migrations }}/migration.sql:/app/migration.sql \
+          -v ${{ inputs.runner-download-migrations }}/migration.sql:/app/migration.sql \
           -v ${{ github.workspace }}/cicd/scripts/migration-entrypoint.sh:/app/migration-entrypoint.sh \
           mcr.microsoft.com/mssql-tools:latest \
           /bin/bash /app/migration-entrypoint.sh
