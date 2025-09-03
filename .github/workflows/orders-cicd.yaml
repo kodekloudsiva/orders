@@ -264,7 +264,7 @@ jobs:
         remote_host: ${{ vars.REMOTE_HOST }}
         remote_user: ${{ env.REMOTE_USER }}
         remote_app_dir: ${{ env.REMOTE_APP_DIR }}
-        ssh_private_key: ${{ secrets.REMOTE_SSH_PRIVATE_KEY }}
+        ssh_private_key: ${{ secrets.REMOTE_HOST_SSH_PRIVATE_KEY }}
         sa_password: ${{ secrets.SA_PASSWORD }}
         api_compose_file: ${{ env.API_COMPOSE_FILE }}
         api_compose_file_withpath: ${{ env.API_COMPOSE_FILE_WITHPATH }}
@@ -307,7 +307,7 @@ jobs:
         remote_host: ${{ vars.REMOTE_HOST }}
         remote_user: ${{ env.REMOTE_USER }}
         remote_app_dir: ${{ env.REMOTE_APP_DIR }}
-        ssh_private_key: ${{ secrets.REMOTE_SSH_PRIVATE_KEY }}
+        ssh_private_key: ${{ secrets.REMOTE_HOST_SSH_PRIVATE_KEY }}
         sa_password: ${{ secrets.SA_PASSWORD }}
         api_compose_file: ${{ env.API_COMPOSE_FILE }}
         api_compose_file_withpath: ${{ env.API_COMPOSE_FILE_WITHPATH }}        
