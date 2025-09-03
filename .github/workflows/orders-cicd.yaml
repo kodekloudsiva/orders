@@ -189,7 +189,10 @@ jobs:
           if-no-files-found: error
 
       - name: 📂 Prepare migrations directory
-        run: mkdir -p $DOWNLOAD_MIGRATIONS
+        run: | 
+          mkdir -p $DOWNLOAD_MIGRATIONS
+          pwd
+          ls -lrta
 
       - name: Re-download artifact for validation
         uses: actions/download-artifact@v4
