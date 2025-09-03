@@ -312,4 +312,4 @@ jobs:
         api_compose_file: ${{ env.API_COMPOSE_FILE }}
         api_compose_file_withpath: ${{ env.API_COMPOSE_FILE_WITHPATH }}        
         ghcr_pat: ${{ secrets.GHCR_PAT }}
-        image_tag: ${{ needs.build-and-push.outputs.image_tag }}        
+        image_tag: ${{ needs.build-and-push.outputs.image_tag }}
