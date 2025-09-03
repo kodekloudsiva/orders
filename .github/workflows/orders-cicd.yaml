@@ -22,7 +22,6 @@ env:
   SQL_PORT: '1433'
   SQL_USER: 'sa'
   SQL_DB: 'OrdersDb'
-  DOWNLOAD_MIGRATIONS: ${{ github.workspace }}/migrations
 
 
 jobs:
@@ -188,25 +187,6 @@ jobs:
           path: migrations/migration.sql
           if-no-files-found: error
 
-      - name: 📂 Prepare migrations directory
-        run: | 
-          mkdir -p $DOWNLOAD_MIGRATIONS
-          pwd
-          ls -lrta
-
-      - name: Re-download artifact for validation
-        uses: actions/download-artifact@v4
-        with:
-          name: db-migration-scripts
-          path: $DOWNLOAD_MIGRATIONS/
-
-      - name: Validate uploaded artifact contents
-        run: |
-          echo "📦 Contents of downloaded artifact:"
-          find $DOWNLOAD_MIGRATIONS/ -type f -maxdepth 3 -print
-          pwd
-          ls -lrta
-
   # ---------------------------------
   # 3. Apply DB Migrations to staging environment upon approval (push to main/master only)
   # ---------------------------------
@@ -217,8 +197,6 @@ jobs:
     runs-on: ubuntu-latest    
     steps:
         - uses: actions/checkout@v4
-        - name: 📂 Prepare migrations directory
-          run: mkdir -p $DOWNLOAD_MIGRATIONS
         - uses: ./.github/actions/db-apply-migrations
           with:
             sql-host: ${{ vars.REMOTE_HOST }}
@@ -227,7 +205,6 @@ jobs:
             sql-user: ${{ env.SQL_USER }}
             sql-pass: ${{ secrets.SA_PASSWORD }}
             cicd-sql: ${{ env.CICD_SQL }}
-            runner-download-migrations: $DOWNLOAD_MIGRATIONS
 
   # ---------------------------------
   # 4. Build & Push (push to main/master only)
@@ -304,8 +281,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - uses: actions/checkout@v4
-        - name: 📂 Prepare migrations directory
-          run: mkdir -p $DOWNLOAD_MIGRATIONS
         - uses: ./.github/actions/db-apply-migrations
           with:
             sql-host: ${{ vars.REMOTE_HOST }}
@@ -314,7 +289,6 @@ jobs:
             sql-user: ${{ env.SQL_USER }}
             sql-pass: ${{ secrets.SA_PASSWORD }}
             cicd-sql: ${{ env.CICD_SQL }}
-            runner-download-migrations: $DOWNLOAD_MIGRATIONS
 
   # ---------------------------------
   # 7. Deploy API to production environment upon approval (push to main/master only)
