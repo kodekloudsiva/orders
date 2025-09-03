@@ -72,4 +72,6 @@ runs:
           -e DB_USER=${{ inputs.sql-user }} \
           -e DB_PASS="${{ inputs.sql-pass }}" \
           -v ${{ github.workspace }}/${{ inputs.runner-download-migrations }}/migration.sql:/app/migration.sql \
-          sql-applier
+          -v ${{ github.workspace }}/cicd/scripts/migration-entrypoint.sh:/app/migration-entrypoint.sh \
+          mcr.microsoft.com/mssql-tools:latest \
+          /bin/bash /app/migration-entrypoint.sh
