@@ -43,6 +43,10 @@ jobs:
       - name: 📡 Add remote host to known_hosts
         run: ssh-keyscan -H "${{ vars.REMOTE_HOST }}" >> ~/.ssh/known_hosts
 
+      - name: Test SSH connection
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "echo '✅ SSH connection successful'"
+
       - name: 📤 Copy files to remote server
         run: |
           ssh -i ~/.ssh/id_rsa $REMOTE_USER@${{ vars.REMOTE_HOST }} "mkdir -p $SQL_REMOTE_APP_DIR"
