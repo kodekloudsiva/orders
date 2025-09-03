@@ -22,6 +22,7 @@ env:
   SQL_PORT: '1433'
   SQL_USER: 'sa'
   SQL_DB: 'OrdersDb'
+  DOWNLOAD_MIGRATATIONS: '/runner/download/migrations'
 
 
 jobs:
@@ -183,9 +184,12 @@ jobs:
     needs: db-generate-migrations
     if: needs.db-generate-migrations.outputs.has_migrations == 'true'
     environment: staging   # 🔒 approval gate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest    
     steps:
         - uses: actions/checkout@v4
+        - name: 🔐 Set up SSH key
+          run: |
+            mkdir -p $DOWNLOAD_MIGRATATIONS
         - uses: ./.github/actions/db-apply-migrations
           with:
             sql-host: ${{ vars.REMOTE_HOST }}
@@ -194,7 +198,7 @@ jobs:
             sql-user: ${{ env.SQL_USER }}
             sql-pass: ${{ secrets.SQL_PASS }}
             cicd-sql: ${{ env.CICD_SQL }}
-            runner-download-migrations: '/runner/download/migrations'
+            runner-download-migrations: $DOWNLOAD_MIGRATATIONS
 
   # ---------------------------------
   # 4. Build & Push (push to main/master only)
@@ -270,14 +274,19 @@ jobs:
     environment: production   # 🔒 approval gate
     runs-on: ubuntu-latest
     steps:
-    - uses: ./.github/actions/db-apply-migrations
-      with:
-        sql-host: ${{ vars.REMOTE_HOST }}
-        sql-port: ${{ env.SQL_PORT }}
-        sql-db: ${{ env.SQL_DB }}
-        sql-user: ${{ env.SQL_USER }}
-        sql-pass: ${{ secrets.SQL_PASS }}
-        cicd-sql: ${{ env.CICD_SQL }}
+        - uses: actions/checkout@v4
+        - name: 🔐 Set up SSH key
+          run: |
+            mkdir -p $DOWNLOAD_MIGRATATIONS
+        - uses: ./.github/actions/db-apply-migrations
+          with:
+            sql-host: ${{ vars.REMOTE_HOST }}
+            sql-port: ${{ env.SQL_PORT }}
+            sql-db: ${{ env.SQL_DB }}
+            sql-user: ${{ env.SQL_USER }}
+            sql-pass: ${{ secrets.SQL_PASS }}
+            cicd-sql: ${{ env.CICD_SQL }}
+            runner-download-migrations: $DOWNLOAD_MIGRATATIONS
 
   # ---------------------------------
   # 7. Deploy API to production environment upon approval (push to main/master only)
