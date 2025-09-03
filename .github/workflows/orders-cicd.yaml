@@ -201,6 +201,9 @@ jobs:
         run: |
           echo "📦 Contents of downloaded artifact:"
           find $DOWNLOAD_MIGRATIONS/ -type f -maxdepth 3 -print
+          echo "testing siva"
+          pwd 
+          ls -lrta
 
   # ---------------------------------
   # 3. Apply DB Migrations to staging environment upon approval (push to main/master only)
