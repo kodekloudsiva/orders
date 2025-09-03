@@ -45,28 +45,12 @@ runs:
     #   run: |
     #     docker build -f ${{ inputs.cicd-sql }}/sql-applier.Dockerfile . -t sql-applier
 
-    - name: Debug migration sql
+    - name: Debug artifact contents
       shell: bash
       run: |
-        echo "📂 Workspace files:"
-        ls -lrta ${{ github.workspace }}/runner
-        echo "===================================================="
-        ls -lrta ${{ github.workspace }}/runner/download
-        echo "===================================================="
-        ls -lrta ${{ github.workspace }}/runner/download/migrations
-        echo "===================================================="
-        echo "Looking for migrations in: ${{ inputs.runner-download-migrations }}"
-        ls -lrta ${{ inputs.runner-download-migrations }}
+        echo "📂 Checking downloaded artifact location..."
+        ls -Rlh ${{ inputs.runner-download-migrations }}
 
-    - name: Debug Docker inputs
-      shell: bash
-      run: |
-        echo "SQL_HOST=${{ inputs.sql-host }}"
-        echo "SQL_PORT=${{ inputs.sql-port }}"
-        echo "SQL_DB=${{ inputs.sql-db }}"
-        echo "SQL_USER=${{ inputs.sql-user }}"
-        echo "SQL_PASS=${{ inputs.sql-pass }}"
-        ls -l ${{ inputs.runner-download-migrations }}/migration.sql || echo "⚠️ migration.sql not found"
 
     - name: Run SQL Applier to apply migration
       shell: bash
