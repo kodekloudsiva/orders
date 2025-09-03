@@ -66,7 +66,7 @@ runs:
         echo "SQL_DB=${{ inputs.sql-db }}"
         echo "SQL_USER=${{ inputs.sql-user }}"
         echo "SQL_PASS=${{ inputs.sql-pass }}"
-        ls -l ${{ inputs.runner-download-migrations }}/migration.sql
+        ls -l ${{ inputs.runner-download-migrations }}/migration.sql || echo "⚠️ migration.sql not found"
 
     - name: Run SQL Applier to apply migration
       shell: bash

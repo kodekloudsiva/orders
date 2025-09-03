@@ -175,7 +175,7 @@ jobs:
         if: steps.migrations.outputs.has_migrations == 'true'
         with:
           name: db-migration-scripts
-          path: migrations/
+          path: migrations/migration.sql
 
   # ---------------------------------
   # 3. Apply DB Migrations to staging environment upon approval (push to main/master only)
