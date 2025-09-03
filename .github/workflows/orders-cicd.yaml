@@ -89,11 +89,21 @@ jobs:
       # ---------------------------------
       # Install EF Core Tools + Build Solution
       # ---------------------------------
-      - name: Install EF Core tools
-        run: dotnet tool install --global dotnet-ef
+      # - name: Install EF Core tools
+      #   run: dotnet tool install --global dotnet-ef
 
-      - name: Add .NET tools to PATH
-        run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+      # - name: Add .NET tools to PATH
+      #   run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      # Pin SDK version (reads global.json if present)
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json  # or: dotnet-version: '8.0.x'
+
+      # Restore the local tools (picks versions from .config/dotnet-tools.json)
+      - name: Restore .NET tools
+        run: dotnet tool restore
 
       - name: Restore dependencies
         run: dotnet restore ./orders.service.sln
