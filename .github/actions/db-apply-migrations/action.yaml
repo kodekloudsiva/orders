@@ -37,13 +37,12 @@ runs:
         MIGRATION_SQL: ${{ github.workspace }}/sql-migration-scripts/migration.sql
       shell: bash
       run: |
-        echo "🚀 Running SQL Applier with $MIGRATION_SQL"
         docker run --rm \
           -e DB_HOST="${{ inputs.sql-host }},${{ inputs.sql-port }}" \
           -e DB_NAME=${{ inputs.sql-db }} \
           -e DB_USER=${{ inputs.sql-user }} \
           -e DB_PASS="${{ inputs.sql-pass }}" \
-          -v "${{ env.MIGRATION_SQL }}:/app/migration.sql" \
+          -v "${{ github.workspace }}/sql-migration-scripts/migration.sql:/app/migration.sql:ro" \
           -v "${{ github.workspace }}/cicd/scripts/migration-entrypoint.sh:/app/migration-entrypoint.sh:ro" \
           mcr.microsoft.com/mssql-tools:latest \
           /bin/bash /app/migration-entrypoint.sh
