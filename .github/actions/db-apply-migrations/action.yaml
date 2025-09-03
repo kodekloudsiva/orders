@@ -40,10 +40,10 @@ runs:
           && echo "✅ Database is reachable." \
           || (echo "❌ Database is not reachable." && exit 1)
 
-    - name: Build SQL Applier Docker Image
-      shell: bash
-      run: |
-        docker build -f ${{ inputs.cicd-sql }}/sql-applier.Dockerfile . -t sql-applier
+    # - name: Build SQL Applier Docker Image
+    #   shell: bash
+    #   run: |
+    #     docker build -f ${{ inputs.cicd-sql }}/sql-applier.Dockerfile . -t sql-applier
 
     - name: Debug migration sql
       shell: bash
