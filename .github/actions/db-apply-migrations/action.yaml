@@ -32,32 +32,28 @@ runs:
         name: db-migration-scripts
         path: ${{ inputs.runner-download-migrations }}
 
-    - name: Check DB connectivity before applying migration
-      shell: bash
-      run: |
-        echo "🔌 Testing database connection..."
-        timeout 15 bash -c "</dev/tcp/${{ inputs.sql-host }}/${{ inputs.sql-port }}" \
-          && echo "✅ Database is reachable." \
-          || (echo "❌ Database is not reachable." && exit 1)
-
-    # - name: Build SQL Applier Docker Image
-    #   shell: bash
-    #   run: |
-    #     docker build -f ${{ inputs.cicd-sql }}/sql-applier.Dockerfile . -t sql-applier
-
-    - name: Verify migration.sql exists
-      shell: bash
-      run: |
-        echo "📂 Checking artifact path: ${{ inputs.runner-download-migrations }}"
-        ls -Rlh ${{ inputs.runner-download-migrations }}
         
-        if [ ! -f "${{ inputs.runner-download-migrations }}/migration.sql" ]; then
-          echo "❌ migration.sql not found at ${{ inputs.runner-download-migrations }}/migration.sql"
+    - name: Locate migration.sql
+      id: find-sql
+      shell: bash
+      run: |
+        echo "📂 Searching for migration.sql inside: ${{ inputs.runner-download-migrations }}"
+        FOUND_FILE=$(find "${{ inputs.runner-download-migrations }}" -type f -name "migration.sql" | head -n 1)
+
+        if [[ -z "$FOUND_FILE" ]]; then
+          echo "❌ migration.sql not found in artifact!"
           exit 1
-        else
-          echo "✅ migration.sql found at ${{ inputs.runner-download-migrations }}/migration.sql"
         fi
 
+        echo "✅ Found migration.sql at: $FOUND_FILE"
+        echo "MIGRATION_SQL=$FOUND_FILE" >> $GITHUB_ENV
+        echo "migration-sql=$FOUND_FILE" >> $GITHUB_OUTPUT
+
+    - name: Debug migration.sql path
+      shell: bash
+      run: |
+        echo "Resolved migration.sql path: $MIGRATION_SQL"
+        ls -lh $MIGRATION_SQL
 
     - name: Run SQL Applier to apply migration
       shell: bash
@@ -66,8 +62,8 @@ runs:
           -e DB_HOST="${{ inputs.sql-host }},${{ inputs.sql-port }}" \
           -e DB_NAME=${{ inputs.sql-db }} \
           -e DB_USER=${{ inputs.sql-user }} \
-          -e DB_PASS="${{ inputs.sql-pass }}" \          
-          -v ${{ inputs.runner-download-migrations }}/migration.sql:/app/migration.sql \
+          -e DB_PASS="${{ inputs.sql-pass }}" \
+          -v $MIGRATION_SQL:/app/migration.sql \
           -v ${{ github.workspace }}/cicd/scripts/migration-entrypoint.sh:/app/migration-entrypoint.sh \
           mcr.microsoft.com/mssql-tools:latest \
           /bin/bash /app/migration-entrypoint.sh

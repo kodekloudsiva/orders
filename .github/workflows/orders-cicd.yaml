@@ -169,7 +169,17 @@ jobs:
             --startup-project orders.webapi \
             --configuration Release \
             --context OrderDbContext \
-            --output "migrations/migration.sql" \
+            --output "migrations/migration.sql"
+
+          echo "📂 Checking generated file:"
+          ls -lh migrations/
+
+          if [ ! -f "migrations/migration.sql" ]; then
+            echo "❌ migration.sql not generated!"
+            exit 1
+          else
+            echo "✅ migration.sql generated successfully"
+          fi
 
       - uses: actions/upload-artifact@v4
         if: steps.migrations.outputs.has_migrations == 'true'
