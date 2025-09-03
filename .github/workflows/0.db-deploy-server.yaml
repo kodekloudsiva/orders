@@ -37,11 +37,16 @@ jobs:
       - name: 🔐 Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.REMOTE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "$REMOTE_HOST_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
       - name: 📡 Add remote host to known_hosts
         run: ssh-keyscan -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
+
+      - name: 🔍 Validate environment variables
+        run: |
+          echo "REMOTE_USER: $REMOTE_USER"
+          echo "REMOTE_HOST: $REMOTE_HOST"
 
       - name: Test SSH connection
         run: |
