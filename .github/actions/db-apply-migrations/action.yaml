@@ -30,56 +30,11 @@ runs:
     - uses: actions/download-artifact@v4
       with:
         name: db-migration-scripts
-        path: ${{ inputs.runner-download-migrations }}/
-        # path: ${{ github.workspace }}/migrations/
-    
-
-    - name: test file
-      id: test-file-sql
-      shell: bash
-      run: | 
-        echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
-        echo "Output of pwd: " && pwd
-        echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
-        echo "Output of inputs.runner-download-migrations: " && echo ${{ inputs.runner-download-migrations }}
-        echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
-        echo "Output of ls -lrta: " && ls -lrta ${{ inputs.runner-download-migrations }}
-        echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
-        ls -lrta ${{ inputs.runner-download-migrations }}/migrations
-        echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
-        echo "Output of ls -lrta inputs.runner-download-migrations: " && ls -lrta ${{ inputs.runner-download-migrations }}
-        echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
-
-
-    - name: Locate migration.sql
-      id: find-sql
-      shell: bash
-      run: |
-        echo "📂 Searching for migration.sql inside: ${{ inputs.runner-download-migrations }}"
-        FOUND_FILE=$(find "${{ inputs.runner-download-migrations }}" -type f -name "migration.sql" | head -n 1)
-
-        if [[ -z "$FOUND_FILE" ]]; then
-          echo "❌ migration.sql not found in artifact!"
-          exit 1
-        fi
-
-        echo "✅ Found migration.sql at: $FOUND_FILE"
-        echo "MIGRATION_SQL=$FOUND_FILE" >> $GITHUB_ENV
-        echo "migration-sql=$FOUND_FILE" >> $GITHUB_OUTPUT
-
-    - name: Debug migration.sql path
-      shell: bash
-      run: |
-        echo "Resolved migration.sql path: $MIGRATION_SQL"
-        ls -lh "$MIGRATION_SQL"
-
-    - name: Preview migration.sql (first 20 lines)
-      shell: bash
-      run: |
-        echo "👀 Previewing first 20 lines of migration.sql:"
-        head -n 20 "$MIGRATION_SQL" || echo "⚠️ Unable to read migration.sql"
+        path: sql-migration-scripts
 
     - name: Run SQL Applier to apply migration
+      env:
+        MIGRATION_SQL: ${{ github.workspace }}/sql-migration-scripts/migration.sql
       shell: bash
       run: |
         echo "🚀 Running SQL Applier with $MIGRATION_SQL"
@@ -88,7 +43,7 @@ runs:
           -e DB_NAME=${{ inputs.sql-db }} \
           -e DB_USER=${{ inputs.sql-user }} \
           -e DB_PASS="${{ inputs.sql-pass }}" \
-          -v "${{ env.MIGRATION_SQL }}":/app/migration.sql \
-          -v "${{ github.workspace }}/cicd/scripts/migration-entrypoint.sh":/app/migration-entrypoint.sh \
+          -v "${{ env.MIGRATION_SQL }}:/app/migration.sql" \
+          -v "${{ github.workspace }}/cicd/scripts/migration-entrypoint.sh:/app/migration-entrypoint.sh:ro" \
           mcr.microsoft.com/mssql-tools:latest \
           /bin/bash /app/migration-entrypoint.sh
