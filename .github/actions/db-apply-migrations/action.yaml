@@ -49,7 +49,7 @@ runs:
       shell: bash
       run: |
         echo "📂 Workspace files:"
-        ls -lrta ${{ github.workspace }}
+        ls -lrta ${{ github.workspace }}/runner
         echo "📄 Checking migration.sql:"
         file ${{ inputs.runner-download-migrations }}/migration.sql || echo "migration.sql not found"
 
