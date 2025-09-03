@@ -87,21 +87,13 @@ jobs:
       - uses: actions/checkout@v4
 
       # ---------------------------------
-      # Install EF Core Tools + Build Solution
+      # Setup .NET
       # ---------------------------------
-      # - name: Install EF Core tools
-      #   run: dotnet tool install --global dotnet-ef
-
-      # - name: Add .NET tools to PATH
-      #   run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
-
-      # Pin SDK version (reads global.json if present)
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: global.json  # or: dotnet-version: '8.0.x'
+          global-json-file: global.json
 
-      # Restore the local tools (picks versions from .config/dotnet-tools.json)
       - name: Restore .NET tools
         run: dotnet tool restore
 
@@ -112,15 +104,17 @@ jobs:
         run: dotnet build ./orders.service.sln --configuration Release --no-restore
 
       # ---------------------------------
-      # Check for EF Core migrations
+      # Check for pending EF Core migrations
       # ---------------------------------
-      - name: Get migrations
+      - name: Get pending migrations
         id: migrations
-        env: 
-          ConnectionStrings__DefaultConnection: "Server=DummyServer;Database=DummyDb;User Id=sa;Password=DummyPassword;"
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION }}
         run: |
           echo "📋 Checking EF Core migrations..."
-          MIGRATIONS=$(dotnet ef migrations list \
+
+          # List all migrations in project
+          ALL_MIGRATIONS=$(dotnet ef migrations list \
             --project orders.database \
             --startup-project orders.webapi \
             --configuration Release \
@@ -128,22 +122,32 @@ jobs:
             --no-build --no-connect 2>&1 \
             | grep -E '^[0-9]{14}_.+' || true)
 
-          echo "MIGRATIONS FOUND:"
-          echo "$MIGRATIONS"
+          # List migrations already applied to DB (dry-run)
+          APPLIED_MIGRATIONS=$(dotnet ef database update --dry-run \
+            --project orders.database \
+            --startup-project orders.webapi \
+            --configuration Release \
+            --context OrderDbContext 2>&1 \
+            | grep -E 'Applying migration' | awk '{print $3}' || true)
 
-          if [[ -z "$MIGRATIONS" || "$MIGRATIONS" == "No migrations were found." ]]; then
+          # Compute pending migrations
+          PENDING=$(comm -23 <(echo "$ALL_MIGRATIONS" | sort) <(echo "$APPLIED_MIGRATIONS" | sort))
+
+          echo "Pending migrations:"
+          echo "$PENDING"
+
+          if [[ -z "$PENDING" ]]; then
             echo "has_migrations=false" >> $GITHUB_OUTPUT
           else
-            LAST_MIGRATION=$(echo "$MIGRATIONS" | tail -n 1)
-            PREVIOUS_MIGRATION=$(echo "$MIGRATIONS" | tail -n 2 | head -n 1)
-
+            LAST_MIGRATION=$(echo "$PENDING" | tail -n 1)
+            PREVIOUS_MIGRATION=$(echo "$PENDING" | tail -n 2 | head -n 1)
             echo "has_migrations=true" >> $GITHUB_OUTPUT
             echo "LAST_MIGRATION=$LAST_MIGRATION" >> $GITHUB_OUTPUT
             echo "PREVIOUS_MIGRATION=$PREVIOUS_MIGRATION" >> $GITHUB_OUTPUT
           fi
 
       # ---------------------------------
-      # Generate migration SQL (if found)
+      # Generate migration SQL (only if pending migrations exist)
       # ---------------------------------
       - name: Set migration args
         if: steps.migrations.outputs.has_migrations == 'true'
@@ -207,7 +211,7 @@ jobs:
             cicd-sql: ${{ env.CICD_SQL }}
 
   # ---------------------------------
-  # 4. Build & Push (push to main/master only)
+  # 4. Build & Push (push to main/master only.)
   # ---------------------------------
   build-and-push:
     needs: [unit-tests, db-generate-migrations, db-apply-migrations-staging]
