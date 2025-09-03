@@ -38,11 +38,15 @@ runs:
       shell: bash
       run: | 
         echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
-        pwd
+        echo "Output of pwd: " && pwd
         echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
-        echo ${{ inputs.runner-download-migrations }}
+        echo "Output of inputs.runner-download-migrations: " && echo ${{ inputs.runner-download-migrations }}
         echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
-        ls -lrta ${{ inputs.runner-download-migrations }}
+        echo "Output of ls -lrta: " && ls -lrta ${{ inputs.runner-download-migrations }}
+        echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
+        ls -lrta ${{ inputs.runner-download-migrations }}/migrations
+        echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
+        echo "Output of ls -lrta inputs.runner-download-migrations: " && ls -lrta ${{ inputs.runner-download-migrations }}
         echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
 
 
