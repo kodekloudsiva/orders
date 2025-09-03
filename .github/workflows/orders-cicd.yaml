@@ -22,7 +22,7 @@ env:
   SQL_PORT: '1433'
   SQL_USER: 'sa'
   SQL_DB: 'OrdersDb'
-  DOWNLOAD_MIGRATIONS: ${{ github.workspace }}/runner/download/migrations
+  DOWNLOAD_MIGRATIONS: runner/download/migrations
 
 
 jobs:
