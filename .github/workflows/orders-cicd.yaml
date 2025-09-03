@@ -175,7 +175,7 @@ jobs:
         if: steps.migrations.outputs.has_migrations == 'true'
         with:
           name: db-migration-scripts
-          path: migrations/migration.sql
+          path: migrations/
           if-no-files-found: error
 
   # ---------------------------------

@@ -45,11 +45,18 @@ runs:
     #   run: |
     #     docker build -f ${{ inputs.cicd-sql }}/sql-applier.Dockerfile . -t sql-applier
 
-    - name: Debug artifact contents
+    - name: Verify migration.sql exists
       shell: bash
       run: |
-        echo "📂 Checking downloaded artifact location..."
+        echo "📂 Checking artifact path: ${{ inputs.runner-download-migrations }}"
         ls -Rlh ${{ inputs.runner-download-migrations }}
+        
+        if [ ! -f "${{ inputs.runner-download-migrations }}/migration.sql" ]; then
+          echo "❌ migration.sql not found at ${{ inputs.runner-download-migrations }}/migration.sql"
+          exit 1
+        else
+          echo "✅ migration.sql found at ${{ inputs.runner-download-migrations }}/migration.sql"
+        fi
 
 
     - name: Run SQL Applier to apply migration
@@ -59,7 +66,7 @@ runs:
           -e DB_HOST="${{ inputs.sql-host }},${{ inputs.sql-port }}" \
           -e DB_NAME=${{ inputs.sql-db }} \
           -e DB_USER=${{ inputs.sql-user }} \
-          -e DB_PASS="${{ inputs.sql-pass }}" \
+          -e DB_PASS="${{ inputs.sql-pass }}" \          
           -v ${{ inputs.runner-download-migrations }}/migration.sql:/app/migration.sql \
           -v ${{ github.workspace }}/cicd/scripts/migration-entrypoint.sh:/app/migration-entrypoint.sh \
           mcr.microsoft.com/mssql-tools:latest \
