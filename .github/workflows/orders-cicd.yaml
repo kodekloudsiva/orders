@@ -198,16 +198,15 @@ jobs:
     runs-on: ubuntu-latest    
     steps:
         - uses: actions/checkout@v4
-        - name: 🔐 Set up SSH key
-          run: |
-            mkdir -p $DOWNLOAD_MIGRATIONS
+        - name: 📂 Prepare migrations directory
+          run: mkdir -p $DOWNLOAD_MIGRATIONS
         - uses: ./.github/actions/db-apply-migrations
           with:
             sql-host: ${{ vars.REMOTE_HOST }}
             sql-port: ${{ env.SQL_PORT }}
             sql-db: ${{ env.SQL_DB }}
             sql-user: ${{ env.SQL_USER }}
-            sql-pass: ${{ secrets.SQL_PASS }}
+            sql-pass: ${{ secrets.SA_PASSWORD }}
             cicd-sql: ${{ env.CICD_SQL }}
             runner-download-migrations: $DOWNLOAD_MIGRATIONS
 
@@ -286,16 +285,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - uses: actions/checkout@v4
-        - name: 🔐 Set up SSH key
-          run: |
-            mkdir -p $DOWNLOAD_MIGRATIONS
+        - name: 📂 Prepare migrations directory
+          run: mkdir -p $DOWNLOAD_MIGRATIONS
         - uses: ./.github/actions/db-apply-migrations
           with:
             sql-host: ${{ vars.REMOTE_HOST }}
             sql-port: ${{ env.SQL_PORT }}
             sql-db: ${{ env.SQL_DB }}
             sql-user: ${{ env.SQL_USER }}
-            sql-pass: ${{ secrets.SQL_PASS }}
+            sql-pass: ${{ secrets.SA_PASSWORD }}
             cicd-sql: ${{ env.CICD_SQL }}
             runner-download-migrations: $DOWNLOAD_MIGRATIONS
 
