@@ -30,7 +30,8 @@ runs:
     - uses: actions/download-artifact@v4
       with:
         name: db-migration-scripts
-        path: ${{ inputs.runner-download-migrations }}
+        path: ${{ inputs.runner-download-migrations }}/
+        # path: ${{ github.workspace }}/migrations/
     
 
     - name: test file
