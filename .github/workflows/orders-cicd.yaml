@@ -176,6 +176,7 @@ jobs:
         with:
           name: db-migration-scripts
           path: migrations/migration.sql
+          if-no-files-found: error
 
   # ---------------------------------
   # 3. Apply DB Migrations to staging environment upon approval (push to main/master only)
