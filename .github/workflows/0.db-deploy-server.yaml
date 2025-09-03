@@ -41,7 +41,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
 
       - name: 📡 Add remote host to known_hosts
-        run: ssh-keyscan -H "${{ vars.REMOTE_HOST }}" >> ~/.ssh/known_hosts
+        run: ssh-keyscan -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
 
       - name: Test SSH connection
         run: |
@@ -49,16 +49,16 @@ jobs:
 
       - name: 📤 Copy files to remote server
         run: |
-          ssh -i ~/.ssh/id_rsa $REMOTE_USER@${{ vars.REMOTE_HOST }} "mkdir -p $SQL_REMOTE_APP_DIR"
-          scp -i ~/.ssh/id_rsa cicd/sql/$SQL_COMPOSE_FILE $REMOTE_USER@${{ vars.REMOTE_HOST }}:$SQL_REMOTE_APP_DIR/
-          scp -i ~/.ssh/id_rsa cicd/scripts/install-docker.sh $REMOTE_USER@${{ vars.REMOTE_HOST }}:$SQL_REMOTE_APP_DIR/
+          ssh -i ~/.ssh/id_rsa $REMOTE_USER@$REMOTE_HOST "mkdir -p $SQL_REMOTE_APP_DIR"
+          scp -i ~/.ssh/id_rsa cicd/sql/$SQL_COMPOSE_FILE $REMOTE_USER@$REMOTE_HOST:$SQL_REMOTE_APP_DIR/
+          scp -i ~/.ssh/id_rsa cicd/scripts/install-docker.sh $REMOTE_USER@$REMOTE_HOST:$SQL_REMOTE_APP_DIR/
 
       - name: 🐳 Install Docker if needed
-        run: ssh -i ~/.ssh/id_rsa $REMOTE_USER@${{ vars.REMOTE_HOST }} "bash $SQL_REMOTE_APP_DIR/install-docker.sh"
+        run: ssh -i ~/.ssh/id_rsa $REMOTE_USER@$REMOTE_HOST "bash $SQL_REMOTE_APP_DIR/install-docker.sh"
 
       - name: 🚀 Deploy application
         run: |
-          ssh -i ~/.ssh/id_rsa $REMOTE_USER@${{ vars.REMOTE_HOST }} << EOF
+          ssh -i ~/.ssh/id_rsa $REMOTE_USER@$REMOTE_HOST << EOF
             set -e
             cd $SQL_REMOTE_APP_DIR
             echo "SA_PASSWORD=${{ secrets.SA_PASSWORD }}" > .env
