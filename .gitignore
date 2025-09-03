@@ -26,7 +26,6 @@
 
 # Temporary files
 *.cache
-*.config
 *.dbmdl
 *.bak
 *.mdf
