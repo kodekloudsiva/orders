@@ -52,7 +52,7 @@ jobs:
 
       - name: Generate coverage report
         run: |
-          reportgenerator -reports:./TestResults/**/coverage.cobertura.xml \
+          dotnet tool run reportgenerator -reports:./TestResults/**/coverage.cobertura.xml \
           -targetdir:CoverageReport \
           "-reporttypes:Html;TextSummary;HtmlSummary;Cobertura;XmlSummary"
 
