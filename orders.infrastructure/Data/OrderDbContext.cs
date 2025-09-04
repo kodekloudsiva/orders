@@ -35,7 +35,7 @@ namespace orders.infrastructure.Data
                 });
 
 
-                //modelBuilder.SeedProducts();
+                modelBuilder.SeedProducts();
             });
         }
     }
