@@ -30,8 +30,6 @@ jobs:
           dotnet-version: '8.0.x'
 
       - run: dotnet restore
-
-      # Only install bc (lightweight)
       - run: sudo apt-get update && sudo apt-get install -y bc
 
       - name: Run unit tests with coverage
@@ -41,11 +39,6 @@ jobs:
           --results-directory ./TestResults \
           -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura \
           -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Include="[orders.domain]*,[orders.application]*"
-
-      # - name: Install ReportGenerator
-      #   run: |
-      #     dotnet tool install --global dotnet-reportgenerator-globaltool
-      #     echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
 
       - name: Restore dotnet tools
         run: dotnet tool restore
@@ -101,13 +94,16 @@ jobs:
             --context OrderDbContext \
             --no-build --no-connect 2>&1 \
             | grep -E '^[0-9]{14}_.+' || true)
+
           APPLIED_MIGRATIONS=$(dotnet ef database update --dry-run \
             --project orders.database \
             --startup-project orders.webapi \
             --configuration Release \
             --context OrderDbContext 2>&1 \
             | grep -E 'Applying migration' | awk '{print $3}' || true)
+
           PENDING=$(comm -23 <(echo "$ALL_MIGRATIONS" | sort) <(echo "$APPLIED_MIGRATIONS" | sort))
+
           if [[ -z "$PENDING" ]]; then
             echo "has_migrations=false" >> $GITHUB_OUTPUT
           else
@@ -118,29 +114,31 @@ jobs:
             echo "PREVIOUS_MIGRATION=$PREVIOUS_MIGRATION" >> $GITHUB_OUTPUT
           fi
 
-      - name: Set migration args
-        if: steps.migrations.outputs.has_migrations == 'true'
-        run: |
-          if [[ "${{ steps.migrations.outputs.PREVIOUS_MIGRATION }}" == "${{ steps.migrations.outputs.LAST_MIGRATION }}" ]]; then
-            echo "FROM_MIGRATION=0" >> $GITHUB_ENV
-            echo "TO_MIGRATION=${{ steps.migrations.outputs.LAST_MIGRATION }}" >> $GITHUB_ENV
-          else
-            echo "FROM_MIGRATION=${{ steps.migrations.outputs.PREVIOUS_MIGRATION }}" >> $GITHUB_ENV
-            echo "TO_MIGRATION=${{ steps.migrations.outputs.LAST_MIGRATION }}" >> $GITHUB_ENV
-          fi
-
       - name: Generate DB migration scripts
         if: steps.migrations.outputs.has_migrations == 'true'
         run: |
           mkdir -p migrations
+          if [[ "${{ steps.migrations.outputs.PREVIOUS_MIGRATION }}" == "${{ steps.migrations.outputs.LAST_MIGRATION }}" ]]; then
+            FROM_MIGRATION=0
+          else
+            FROM_MIGRATION=${{ steps.migrations.outputs.PREVIOUS_MIGRATION }}
+          fi
+
           dotnet ef migrations script \
-            $FROM_MIGRATION $TO_MIGRATION \
+            $FROM_MIGRATION ${{ steps.migrations.outputs.LAST_MIGRATION }} \
             --idempotent \
             --project orders.database \
             --startup-project orders.webapi \
             --configuration Release \
             --context OrderDbContext \
             --output "migrations/migration.sql"
+
+      - uses: actions/upload-artifact@v4
+        if: steps.migrations.outputs.has_migrations == 'true'
+        with:
+          name: db-migration-scripts
+          path: migrations/migration.sql
+          if-no-files-found: error
 
   # 3. Apply DB Migrations to staging
   db-apply-migrations-staging:
@@ -149,7 +147,11 @@ jobs:
     environment: staging
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: db-migration-scripts
+          path: sql-migration-scripts/
+
       - uses: ./.github/actions/db-apply-migrations
         with:
           sql-host: ${{ vars.REMOTE_HOST }}
@@ -208,26 +210,3 @@ jobs:
           api_compose_file_withpath: ${{ env.API_COMPOSE_FILE_WITHPATH }}
           ghcr_pat: ${{ secrets.GHCR_PAT }}
           image_tag: ${{ needs.build-and-push.outputs.image_tag }}
-
-  # 6. Create GitHub Release with migration.sql + versioned image
-  create-release:
-    needs: [deploy-api-staging, db-generate-migrations, build-and-push]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Generate release version
-        id: version
-        run: echo "version=v1.0.${{ github.run_number }}" >> $GITHUB_OUTPUT
-      - name: Retag Docker image
-        run: |
-          docker pull $IMAGE_NAME:${{ github.sha }}
-          docker tag $IMAGE_NAME:${{ github.sha }} $IMAGE_NAME:${{ steps.version.outputs.version }}
-          docker push $IMAGE_NAME:${{ steps.version.outputs.version }}
-      - name: Create GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create ${{ steps.version.outputs.version }} \
-            --title "Release ${{ steps.version.outputs.version }}" \
-            --notes "Automated release for ${{ steps.version.outputs.version }}" \
-            migrations/migration.sql
