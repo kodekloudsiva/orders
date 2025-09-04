@@ -73,19 +73,18 @@ jobs:
       - run: dotnet restore ./orders.service.sln
       - run: dotnet build ./orders.service.sln --configuration Release --no-restore
 
-      - name: Check for pending migrations
+      - name: Get pending migrations
         id: migrations
         env:
           ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION }}
         run: |
-          echo "📋 Checking EF Core pending migrations..."
-          # List all migrations
+          echo "📋 Checking EF Core migrations..."
           ALL_MIGRATIONS=$(dotnet ef migrations list \
             --project orders.database \
             --startup-project orders.webapi \
             --configuration Release \
             --context OrderDbContext 2>/dev/null || true)
-          # List applied migrations
+
           APPLIED_MIGRATIONS=$(dotnet ef migrations list --applied \
             --project orders.database \
             --startup-project orders.webapi \
@@ -97,14 +96,14 @@ jobs:
 
           if [[ -z "$PENDING" ]]; then
             echo "has_migrations=false" >> $GITHUB_OUTPUT
-            echo "No new migrations detected. Skipping migration generation."
+            echo "No pending migrations."
           else
             LAST_MIGRATION=$(echo "$PENDING" | tail -n 1)
             PREVIOUS_MIGRATION=$(echo "$PENDING" | tail -n 2 | head -n 1 || true)
             echo "has_migrations=true" >> $GITHUB_OUTPUT
             echo "LAST_MIGRATION=$LAST_MIGRATION" >> $GITHUB_OUTPUT
             echo "PREVIOUS_MIGRATION=$PREVIOUS_MIGRATION" >> $GITHUB_OUTPUT
-            echo "Pending migrations detected. Will generate migration scripts."
+            echo "Pending migrations detected: $PENDING"
           fi
 
       - name: Generate DB migration scripts
@@ -129,7 +128,7 @@ jobs:
           path: migrations/migration.sql
           if-no-files-found: error
 
-  # 3. Apply DB Migrations to staging (runs only if migrations exist)
+  # 3. Apply DB Migrations to staging
   db-apply-migrations-staging:
     needs: db-generate-migrations
     if: needs.db-generate-migrations.outputs.has_migrations == 'true'
