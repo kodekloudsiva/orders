@@ -141,7 +141,6 @@ jobs:
           path: migrations/migration.sql
           if-no-files-found: error
 
-
   # 3. Apply DB Migrations to staging
   db-apply-migrations-staging:
     needs: db-generate-migrations
