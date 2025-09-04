@@ -23,7 +23,6 @@ env:
   SQL_USER: 'sa'
   SQL_DB: 'OrdersDb'
 
-
 jobs:
   # ---------------------------------
   # 1. Unit Tests + Coverage

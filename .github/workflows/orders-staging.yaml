@@ -1,0 +1,233 @@
+name: Orders Staging Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+env:
+  CICD_SQL: 'cicd/sql'
+  CICD_API: 'cicd/api'
+  API_COMPOSE_FILE: 'docker-compose-api.yaml'
+  API_COMPOSE_FILE_WITHPATH: 'cicd/api/docker-compose-api.yaml'
+  REMOTE_USER: 'ubuntu'
+  REMOTE_APP_DIR: 'app'
+  SQL_PORT: '1433'
+  SQL_USER: 'sa'
+  SQL_DB: 'OrdersDb'
+  IMAGE_NAME: 'ghcr.io/${{ github.repository_owner }}/siva-dotnet-api'
+
+jobs:
+  # 1. Unit Tests + Coverage
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - run: dotnet restore
+
+      # Only install bc (lightweight)
+      - run: sudo apt-get update && sudo apt-get install -y bc
+
+      - name: Run unit tests with coverage
+        run: |
+          dotnet test ./orders.test/orders.test.csproj \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ./TestResults \
+          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura \
+          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Include="[orders.domain]*,[orders.application]*"
+
+      # - name: Install ReportGenerator
+      #   run: |
+      #     dotnet tool install --global dotnet-reportgenerator-globaltool
+      #     echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+
+      - name: Generate coverage report
+        run: |
+          reportgenerator -reports:./TestResults/**/coverage.cobertura.xml \
+          -targetdir:CoverageReport \
+          "-reporttypes:Html;TextSummary;HtmlSummary;Cobertura;XmlSummary"
+
+      - name: Validate 65% code coverage threshold
+        run: |
+          COVERAGE_FILE=$(find CoverageReport -name 'Summary.txt')
+          COVERAGE_PERCENT=$(grep -oP 'Line coverage:\s*\K[0-9.]+' "$COVERAGE_FILE")
+          echo "✅ Code coverage: $COVERAGE_PERCENT%"
+          if echo "$COVERAGE_PERCENT < 65" | bc -l | grep -q 1; then
+            echo "❌ Code coverage below threshold!"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push'
+        with:
+          name: code-coverage-report
+          path: CoverageReport/
+
+  # 2. Generate DB Migrations
+  db-generate-migrations:
+    needs: unit-tests
+    environment: staging
+    runs-on: ubuntu-latest
+    outputs:
+      has_migrations: ${{ steps.migrations.outputs.has_migrations }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - run: dotnet tool restore
+      - run: dotnet restore ./orders.service.sln
+      - run: dotnet build ./orders.service.sln --configuration Release --no-restore
+
+      - name: Get pending migrations
+        id: migrations
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION }}
+        run: |
+          echo "📋 Checking EF Core migrations..."
+          ALL_MIGRATIONS=$(dotnet ef migrations list \
+            --project orders.database \
+            --startup-project orders.webapi \
+            --configuration Release \
+            --context OrderDbContext \
+            --no-build --no-connect 2>&1 \
+            | grep -E '^[0-9]{14}_.+' || true)
+          APPLIED_MIGRATIONS=$(dotnet ef database update --dry-run \
+            --project orders.database \
+            --startup-project orders.webapi \
+            --configuration Release \
+            --context OrderDbContext 2>&1 \
+            | grep -E 'Applying migration' | awk '{print $3}' || true)
+          PENDING=$(comm -23 <(echo "$ALL_MIGRATIONS" | sort) <(echo "$APPLIED_MIGRATIONS" | sort))
+          if [[ -z "$PENDING" ]]; then
+            echo "has_migrations=false" >> $GITHUB_OUTPUT
+          else
+            LAST_MIGRATION=$(echo "$PENDING" | tail -n 1)
+            PREVIOUS_MIGRATION=$(echo "$PENDING" | tail -n 2 | head -n 1)
+            echo "has_migrations=true" >> $GITHUB_OUTPUT
+            echo "LAST_MIGRATION=$LAST_MIGRATION" >> $GITHUB_OUTPUT
+            echo "PREVIOUS_MIGRATION=$PREVIOUS_MIGRATION" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set migration args
+        if: steps.migrations.outputs.has_migrations == 'true'
+        run: |
+          if [[ "${{ steps.migrations.outputs.PREVIOUS_MIGRATION }}" == "${{ steps.migrations.outputs.LAST_MIGRATION }}" ]]; then
+            echo "FROM_MIGRATION=0" >> $GITHUB_ENV
+            echo "TO_MIGRATION=${{ steps.migrations.outputs.LAST_MIGRATION }}" >> $GITHUB_ENV
+          else
+            echo "FROM_MIGRATION=${{ steps.migrations.outputs.PREVIOUS_MIGRATION }}" >> $GITHUB_ENV
+            echo "TO_MIGRATION=${{ steps.migrations.outputs.LAST_MIGRATION }}" >> $GITHUB_ENV
+          fi
+
+      - name: Generate DB migration scripts
+        if: steps.migrations.outputs.has_migrations == 'true'
+        run: |
+          mkdir -p migrations
+          dotnet ef migrations script \
+            $FROM_MIGRATION $TO_MIGRATION \
+            --idempotent \
+            --project orders.database \
+            --startup-project orders.webapi \
+            --configuration Release \
+            --context OrderDbContext \
+            --output "migrations/migration.sql"
+
+  # 3. Apply DB Migrations to staging
+  db-apply-migrations-staging:
+    needs: db-generate-migrations
+    if: needs.db-generate-migrations.outputs.has_migrations == 'true'
+    environment: staging
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/db-apply-migrations
+        with:
+          sql-host: ${{ vars.REMOTE_HOST }}
+          sql-port: ${{ env.SQL_PORT }}
+          sql-db: ${{ env.SQL_DB }}
+          sql-user: ${{ env.SQL_USER }}
+          sql-pass: ${{ secrets.SA_PASSWORD }}
+          cicd-sql: ${{ env.CICD_SQL }}
+
+  # 4. Build & Push Docker image
+  build-and-push:
+    needs: [unit-tests, db-generate-migrations, db-apply-migrations-staging]
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_OWNER: ${{ github.repository_owner }}
+      IMAGE_NAME: siva-dotnet-api
+      IMAGE_TAG_SHA: ${{ github.sha }}
+      IMAGE_TAG_BRANCH: ${{ github.ref_name }}-${{ github.run_number }}
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.IMAGE_OWNER }}
+          password: ${{ secrets.GHCR_PAT }}
+      - id: meta
+        run: echo "image_tag=${{ env.IMAGE_TAG_SHA }}" >> $GITHUB_OUTPUT
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: cicd/api/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_SHA }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_BRANCH }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:latest
+
+  # 5. Deploy API to staging
+  deploy-api-staging:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/deploy-api
+        with:
+          remote_host: ${{ vars.REMOTE_HOST }}
+          remote_user: ${{ env.REMOTE_USER }}
+          remote_app_dir: ${{ env.REMOTE_APP_DIR }}
+          ssh_private_key: ${{ secrets.REMOTE_HOST_SSH_PRIVATE_KEY }}
+          sa_password: ${{ secrets.SA_PASSWORD }}
+          api_compose_file: ${{ env.API_COMPOSE_FILE }}
+          api_compose_file_withpath: ${{ env.API_COMPOSE_FILE_WITHPATH }}
+          ghcr_pat: ${{ secrets.GHCR_PAT }}
+          image_tag: ${{ needs.build-and-push.outputs.image_tag }}
+
+  # 6. Create GitHub Release with migration.sql + versioned image
+  create-release:
+    needs: [deploy-api-staging, db-generate-migrations, build-and-push]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate release version
+        id: version
+        run: echo "version=v1.0.${{ github.run_number }}" >> $GITHUB_OUTPUT
+      - name: Retag Docker image
+        run: |
+          docker pull $IMAGE_NAME:${{ github.sha }}
+          docker tag $IMAGE_NAME:${{ github.sha }} $IMAGE_NAME:${{ steps.version.outputs.version }}
+          docker push $IMAGE_NAME:${{ steps.version.outputs.version }}
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ steps.version.outputs.version }} \
+            --title "Release ${{ steps.version.outputs.version }}" \
+            --notes "Automated release for ${{ steps.version.outputs.version }}" \
+            migrations/migration.sql
