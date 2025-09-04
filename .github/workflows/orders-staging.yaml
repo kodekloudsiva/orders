@@ -65,6 +65,7 @@ jobs:
           name: code-coverage-report
           path: CoverageReport/
 
+
   # 2. Generate DB Migrations
   db-generate-migrations:
     needs: unit-tests
