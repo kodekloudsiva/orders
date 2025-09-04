@@ -24,31 +24,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.0.x'
-
       - run: dotnet restore
       - run: sudo apt-get update && sudo apt-get install -y bc
-
       - name: Run unit tests with coverage
         run: |
           dotnet test ./orders.test/orders.test.csproj \
-          --collect:"XPlat Code Coverage" \
-          --results-directory ./TestResults \
-          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura \
-          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Include="[orders.domain]*,[orders.application]*"
-
-      - name: Restore dotnet tools
-        run: dotnet tool restore
-
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Include="[orders.domain]*,[orders.application]*"
+      - run: dotnet tool restore
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator -reports:./TestResults/**/coverage.cobertura.xml \
-          -targetdir:CoverageReport \
-          "-reporttypes:Html;TextSummary;HtmlSummary;Cobertura;XmlSummary"
-
+            -targetdir:CoverageReport \
+            "-reporttypes:Html;TextSummary;HtmlSummary;Cobertura;XmlSummary"
       - name: Validate 65% code coverage threshold
         run: |
           COVERAGE_FILE=$(find CoverageReport -name 'Summary.txt')
@@ -58,15 +51,13 @@ jobs:
             echo "❌ Code coverage below threshold!"
             exit 1
           fi
-
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'push'
         with:
           name: code-coverage-report
           path: CoverageReport/
 
-
-  # 2. Generate DB Migrations
+  # 2. Generate DB Migrations (skip if no changes)
   db-generate-migrations:
     needs: unit-tests
     environment: staging
@@ -82,49 +73,46 @@ jobs:
       - run: dotnet restore ./orders.service.sln
       - run: dotnet build ./orders.service.sln --configuration Release --no-restore
 
-      - name: Get pending migrations
+      - name: Check for pending migrations
         id: migrations
         env:
           ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION }}
         run: |
-          echo "📋 Checking EF Core migrations..."
+          echo "📋 Checking EF Core pending migrations..."
+          # List all migrations
           ALL_MIGRATIONS=$(dotnet ef migrations list \
             --project orders.database \
             --startup-project orders.webapi \
             --configuration Release \
-            --context OrderDbContext \
-            --no-build --no-connect 2>&1 \
-            | grep -E '^[0-9]{14}_.+' || true)
-
-          APPLIED_MIGRATIONS=$(dotnet ef database update --dry-run \
+            --context OrderDbContext 2>/dev/null || true)
+          # List applied migrations
+          APPLIED_MIGRATIONS=$(dotnet ef migrations list --applied \
             --project orders.database \
             --startup-project orders.webapi \
             --configuration Release \
-            --context OrderDbContext 2>&1 \
-            | grep -E 'Applying migration' | awk '{print $3}' || true)
+            --context OrderDbContext 2>/dev/null || true)
 
+          # Determine pending migrations
           PENDING=$(comm -23 <(echo "$ALL_MIGRATIONS" | sort) <(echo "$APPLIED_MIGRATIONS" | sort))
 
           if [[ -z "$PENDING" ]]; then
             echo "has_migrations=false" >> $GITHUB_OUTPUT
+            echo "No new migrations detected. Skipping migration generation."
           else
             LAST_MIGRATION=$(echo "$PENDING" | tail -n 1)
-            PREVIOUS_MIGRATION=$(echo "$PENDING" | tail -n 2 | head -n 1)
+            PREVIOUS_MIGRATION=$(echo "$PENDING" | tail -n 2 | head -n 1 || true)
             echo "has_migrations=true" >> $GITHUB_OUTPUT
             echo "LAST_MIGRATION=$LAST_MIGRATION" >> $GITHUB_OUTPUT
             echo "PREVIOUS_MIGRATION=$PREVIOUS_MIGRATION" >> $GITHUB_OUTPUT
+            echo "Pending migrations detected. Will generate migration scripts."
           fi
 
       - name: Generate DB migration scripts
         if: steps.migrations.outputs.has_migrations == 'true'
         run: |
           mkdir -p migrations
-          if [[ "${{ steps.migrations.outputs.PREVIOUS_MIGRATION }}" == "${{ steps.migrations.outputs.LAST_MIGRATION }}" ]]; then
-            FROM_MIGRATION=0
-          else
-            FROM_MIGRATION=${{ steps.migrations.outputs.PREVIOUS_MIGRATION }}
-          fi
-
+          FROM_MIGRATION=${{ steps.migrations.outputs.PREVIOUS_MIGRATION }}
+          [[ -z "$FROM_MIGRATION" ]] && FROM_MIGRATION=0
           dotnet ef migrations script \
             $FROM_MIGRATION ${{ steps.migrations.outputs.LAST_MIGRATION }} \
             --idempotent \
@@ -141,7 +129,7 @@ jobs:
           path: migrations/migration.sql
           if-no-files-found: error
 
-  # 3. Apply DB Migrations to staging
+  # 3. Apply DB Migrations to staging (runs only if migrations exist)
   db-apply-migrations-staging:
     needs: db-generate-migrations
     if: needs.db-generate-migrations.outputs.has_migrations == 'true'
@@ -153,7 +141,6 @@ jobs:
         with:
           name: db-migration-scripts
           path: sql-migration-scripts/
-
       - uses: ./.github/actions/db-apply-migrations
         with:
           sql-host: ${{ vars.REMOTE_HOST }}
