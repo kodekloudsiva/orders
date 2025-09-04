@@ -79,12 +79,14 @@ jobs:
           ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION }}
         run: |
           echo "📋 Checking EF Core migrations..."
+          # Get all migrations
           ALL_MIGRATIONS=$(dotnet ef migrations list \
             --project orders.database \
             --startup-project orders.webapi \
             --configuration Release \
             --context OrderDbContext 2>/dev/null || true)
 
+          # Get applied migrations from the database (optional, can skip in CI)
           APPLIED_MIGRATIONS=$(dotnet ef migrations list --applied \
             --project orders.database \
             --startup-project orders.webapi \
@@ -98,28 +100,22 @@ jobs:
             echo "has_migrations=false" >> $GITHUB_OUTPUT
             echo "No pending migrations."
           else
-            LAST_MIGRATION=$(echo "$PENDING" | tail -n 1)
-            PREVIOUS_MIGRATION=$(echo "$PENDING" | tail -n 2 | head -n 1 || true)
             echo "has_migrations=true" >> $GITHUB_OUTPUT
-            echo "LAST_MIGRATION=$LAST_MIGRATION" >> $GITHUB_OUTPUT
-            echo "PREVIOUS_MIGRATION=$PREVIOUS_MIGRATION" >> $GITHUB_OUTPUT
-            echo "Pending migrations detected: $PENDING"
-          fi
+            echo "Pending migrations detected:"
+            echo "$PENDING"
 
-      - name: Generate DB migration scripts
-        if: steps.migrations.outputs.has_migrations == 'true'
-        run: |
-          mkdir -p migrations
-          FROM_MIGRATION=${{ steps.migrations.outputs.PREVIOUS_MIGRATION }}
-          [[ -z "$FROM_MIGRATION" ]] && FROM_MIGRATION=0
-          dotnet ef migrations script \
-            $FROM_MIGRATION ${{ steps.migrations.outputs.LAST_MIGRATION }} \
-            --idempotent \
-            --project orders.database \
-            --startup-project orders.webapi \
-            --configuration Release \
-            --context OrderDbContext \
-            --output "migrations/migration.sql"
+            # Generate idempotent SQL migration script
+            mkdir -p migrations
+            dotnet ef migrations script \
+              --idempotent \
+              --project orders.database \
+              --startup-project orders.webapi \
+              --configuration Release \
+              --context OrderDbContext \
+              --output "migrations/migration.sql"
+
+            echo "✅ Migration script generated at migrations/migration.sql"
+          fi
 
       - uses: actions/upload-artifact@v4
         if: steps.migrations.outputs.has_migrations == 'true'
