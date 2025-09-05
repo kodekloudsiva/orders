@@ -1,0 +1,67 @@
+name: Orders Production Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version to deploy (e.g. v1.0.0)"
+        required: true
+
+env:
+  CICD_SQL: 'cicd/sql'
+  CICD_API: 'cicd/api'
+  API_COMPOSE_FILE: 'docker-compose-api.yaml'
+  API_COMPOSE_FILE_WITHPATH: 'cicd/api/docker-compose-api.yaml'
+  REMOTE_USER: 'ubuntu'
+  REMOTE_APP_DIR: 'app'
+  SQL_PORT: '1433'
+  SQL_USER: 'sa'
+  SQL_DB: 'OrdersDb'
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    environment: production   # triggers manual approval if env protection enabled
+    steps:
+      - uses: actions/checkout@v4
+
+      # Download migration.sql from GitHub Release
+      - name: Download migration.sql
+        run: |
+          gh release download ${{ github.event.inputs.version }} \
+            --pattern "migration.sql" \
+            --dir ./migrations
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Apply DB migrations
+      - name: Apply migrations to prod DB
+        uses: ./.github/actions/db-apply-migrations
+        with:
+          sql-host: ${{ vars.PROD_REMOTE_HOST }}
+          sql-port: ${{ env.SQL_PORT }}
+          sql-db: ${{ env.SQL_DB }}
+          sql-user: ${{ env.SQL_USER }}
+          sql-pass: ${{ secrets.PROD_SA_PASSWORD }}
+          cicd-sql: ${{ env.CICD_SQL }}
+
+      # Deploy API to production
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Deploy API to production
+        uses: ./.github/actions/deploy-api
+        with:
+          remote_host: ${{ vars.PROD_REMOTE_HOST }}
+          remote_user: ${{ env.REMOTE_USER }}
+          remote_app_dir: ${{ env.REMOTE_APP_DIR }}
+          ssh_private_key: ${{ secrets.PROD_REMOTE_HOST_SSH_PRIVATE_KEY }}
+          sa_password: ${{ secrets.PROD_SA_PASSWORD }}
+          api_compose_file: ${{ env.API_COMPOSE_FILE }}
+          api_compose_file_withpath: ${{ env.API_COMPOSE_FILE_WITHPATH }}
+          ghcr_pat: ${{ secrets.GHCR_PAT }}
+          image_tag: ${{ github.event.inputs.version }}

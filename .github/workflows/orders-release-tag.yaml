@@ -1,0 +1,97 @@
+name: Orders Release Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Staging image tag to promote'
+        required: true
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1. Download migration.sql artifact from last staging run
+      - name: Download migration.sql
+        uses: actions/download-artifact@v4
+        with:
+          name: db-migration-scripts
+          path: ./migrations
+
+      # 2. Generate release version
+      - name: Generate release version
+        id: version
+        run: echo "version=v1.0.${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      # 3. Docker login
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      # 4. Verify staging image exists in GHCR
+      - name: Verify staging image exists
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/orders-api
+          STAGING_TAG=${{ github.event.inputs.image_tag }}
+
+          echo "Checking if $IMAGE:$STAGING_TAG exists in GHCR..."
+          if ! docker manifest inspect $IMAGE:$STAGING_TAG > /dev/null 2>&1; then
+            echo "❌ Error: Staging image $IMAGE:$STAGING_TAG not found in GHCR."
+            exit 1
+          fi
+          echo "✅ Staging image found: $IMAGE:$STAGING_TAG"
+
+      # 5. Verify release tag does not already exist
+      - name: Verify release tag does not exist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_TAG=${{ steps.version.outputs.version }}
+
+          echo "Checking if release tag $RELEASE_TAG already exists..."
+          if gh release view $RELEASE_TAG > /dev/null 2>&1; then
+            echo "❌ Error: Release tag $RELEASE_TAG already exists."
+            exit 1
+          fi
+          echo "✅ No existing release found for tag: $RELEASE_TAG"
+
+      # 6. Retag Docker image (reuse staging image)
+      - name: Retag & push Docker image
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/orders-api
+          STAGING_TAG=${{ github.event.inputs.image_tag }}
+          RELEASE_TAG=${{ steps.version.outputs.version }}
+
+          echo "Pulling staging image: $IMAGE:$STAGING_TAG"
+          docker pull $IMAGE:$STAGING_TAG
+
+          echo "Tagging as release: $IMAGE:$RELEASE_TAG"
+          docker tag $IMAGE:$STAGING_TAG $IMAGE:$RELEASE_TAG
+
+          echo "Pushing release image..."
+          docker push $IMAGE:$RELEASE_TAG
+
+      # 7. Create GitHub Release (attach migration.sql, reference image in notes)
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_TAG=${{ steps.version.outputs.version }}
+          IMAGE=ghcr.io/${{ github.repository_owner }}/orders-api:$RELEASE_TAG
+
+          echo "Creating release notes..."
+          echo "Automated release from staging build" > release_notes.md
+          echo "" >> release_notes.md
+          echo "Docker image available at:" >> release_notes.md
+          echo "$IMAGE" >> release_notes.md
+
+          echo "Creating GitHub release $RELEASE_TAG..."
+          gh release create $RELEASE_TAG \
+            --title "Release $RELEASE_TAG" \
+            --notes-file release_notes.md \
+            ./migrations/migration.sql

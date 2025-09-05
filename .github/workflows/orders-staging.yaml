@@ -3,8 +3,12 @@ name: Orders Staging Pipeline
 on:
   push:
     branches:
+      - '**'     # Run on all branches (feature, hotfix, main, etc.)
+  pull_request:
+    branches:
       - main
       - master
+  workflow_dispatch: {}
 
 env:
   CICD_SQL: 'cicd/sql'
@@ -16,7 +20,7 @@ env:
   SQL_PORT: '1433'
   SQL_USER: 'sa'
   SQL_DB: 'OrdersDb'
-  IMAGE_NAME: 'ghcr.io/${{ github.repository_owner }}/siva-dotnet-api'
+  IMAGE_NAME: 'ghcr.io/${{ github.repository_owner }}/orders-api'
 
 jobs:
   # 1. Unit Tests + Coverage
@@ -60,6 +64,7 @@ jobs:
   # 2. Generate DB Migrations (skip if no changes)
   db-generate-migrations:
     needs: unit-tests
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     environment: staging
     runs-on: ubuntu-latest
     outputs:
@@ -148,11 +153,12 @@ jobs:
   # 4. Build & Push Docker image
   build-and-push:
     needs: [unit-tests, db-generate-migrations, db-apply-migrations-staging]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     env:
       REGISTRY: ghcr.io
       IMAGE_OWNER: ${{ github.repository_owner }}
-      IMAGE_NAME: siva-dotnet-api
+      IMAGE_NAME: orders-api
       IMAGE_TAG_SHA: ${{ github.sha }}
       IMAGE_TAG_BRANCH: ${{ github.ref_name }}-${{ github.run_number }}
     outputs:
